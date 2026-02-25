@@ -7,50 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800;900&family=Nunito:wght@400;700;900&family=Pacifico&display=swap" rel="stylesheet">
 <style>
   * { box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent; }
-/* ── SWIPE SNAPPING CORE ── */
-  html, body {
-    height: 100%;
-    overflow: hidden; /* Prevents the whole body from scrolling normally */
-  }
-
-  .snap-wrapper {
-    height: 100vh;
-    overflow-y: scroll;
-    scroll-snap-type: y mandatory; /* Forces snapping behavior */
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* Ensures smooth feel on iPad */
-  }
-
-  .page-section {
-    height: 100vh; /* Each section is exactly one screen tall */
-    width: 100%;
-    scroll-snap-align: start; /* Where the snap 'locks' */
-    position: relative;
-    overflow-y: auto; /* Allows internal scrolling if content is too long */
-  }
-
-  body {
-    font-family:'Baloo 2', cursive;
-    background: linear-gradient(160deg,#fff0fb 0%,#fef9e7 40%,#e8f8f5 100%);
-  }
-
-  /* ── SWIPE HINT ── */
-  .swipe-up-hint {
-    position: absolute;
-    bottom: 30px;
-    width: 100%;
-    text-align: center;
-    font-weight: 800;
-    color: #7c3aed;
-    animation: bounce 2s infinite;
-    z-index: 20;
-  }
-
-  @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-    40% {transform: translateY(-10px);}
-    60% {transform: translateY(-5px);}
-  }  /* ── floating bg ── */
+  /* ── floating bg ── */
   .bg-float { position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden; }
   .fi { position:absolute;opacity:0.09;animation:floatUp linear infinite; }
   @keyframes floatUp {
