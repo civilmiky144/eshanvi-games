@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🌟 Memory Magic</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800;900&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --card-back: linear-gradient(135deg, #a855f7, #ec4899);
+    --card-radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Baloo 2', cursive;
+    background: linear-gradient(160deg, #fdf4ff 0%, #fef3c7 40%, #ecfdf5 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* floating stars */
+  .bg-stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .star { position: absolute; opacity: 0.12; animation: floatStar linear infinite; }
+  @keyframes floatStar {
+    0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
+    10%  { opacity: 0.12; }
+    90%  { opacity: 0.12; }
+    100% { transform: translateY(-8vh)  rotate(360deg); opacity: 0; }
+  }
+
+  /* header */
+  header {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: 14px 20px 10px;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(10px);
+    border-bottom: 3px dashed #f0abfc;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .home-btn {
+    background: linear-gradient(135deg,#a855f7,#ec4899);
+    color: white; border: none; border-radius: 50px;
+    padding: 8px 16px; font-family: 'Baloo 2', cursive;
+    font-size: 0.9rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(168,85,247,0.35);
+    text-decoration: none; display: inline-block;
+    transition: transform 0.15s;
+  }
+  .home-btn:active { transform: scale(0.93); }
+  header h1 {
+    font-size: clamp(1.5rem, 5vw, 2.4rem);
+    font-weight: 900;
+    background: linear-gradient(90deg, #a855f7, #ec4899, #f59e0b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; line-height: 1.2;
+    flex: 1;
+  }
+  .header-spacer { width: 76px; }
+
+  /* stats */
+  .stats {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center; gap: 12px;
+    padding: 10px 16px; flex-wrap: wrap;
+  }
+  .stat-badge {
+    background: white; border-radius: 50px;
+    padding: 7px 18px; font-size: 0.95rem; font-weight: 800;
+    box-shadow: 0 4px 12px rgba(168,85,247,0.18);
+    border: 2px solid #f0abfc; color: #7c3aed;
+    transition: transform 0.2s;
+  }
+  .stat-badge.pulse { animation: popBadge 0.35s ease; }
+  @keyframes popBadge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.28)} }
+
+  /* upload section */
+  .upload-section {
+    position: relative; z-index: 10;
+    background: rgba(255,255,255,0.75);
+    border-radius: 20px; margin: 6px 14px;
+    padding: 14px 18px; border: 2.5px dashed #c084fc;
+    text-align: center;
+  }
+  .upload-section .up-title {
+    font-size: 0.95rem; color: #7c3aed; font-weight: 800; margin-bottom: 8px;
+  }
+  .upload-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .upload-btn {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: white; border: none; border-radius: 50px;
+    padding: 9px 22px; font-family: 'Baloo 2', cursive;
+    font-size: 0.95rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(168,85,247,0.38); transition: transform 0.15s;
+  }
+  .upload-btn:active { transform: scale(0.95); }
+  #fileInput { display: none; }
+  .upload-note { font-size: 0.78rem; color: #a855f7; margin-top: 6px; opacity: 0.85; }
+  .uploaded-thumbs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+  .thumb {
+    width: 46px; height: 46px; border-radius: 10px; object-fit: cover;
+    border: 2.5px solid #f0abfc;
+  }
+  /* upload status */
+  .up-status {
+    font-size: 0.82rem; font-weight: 800; margin-top: 6px;
+    color: #059669; min-height: 18px;
+  }
+
+  /* difficulty */
+  .difficulty {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center; gap: 10px;
+    padding: 8px 16px 6px; flex-wrap: wrap;
+  }
+  .diff-btn {
+    border: 2.5px solid #e879f9; background: white; color: #7c3aed;
+    border-radius: 50px; padding: 7px 18px;
+    font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.88rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .diff-btn.active {
+    background: linear-gradient(135deg, #e879f9, #a855f7);
+    color: white; border-color: transparent;
+    box-shadow: 0 4px 12px rgba(232,121,249,0.4);
+  }
+
+  /* controls */
+  .controls {
+    position: relative; z-index: 10;
+    text-align: center; padding: 6px 16px 12px;
+    display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
+  }
+  .btn {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: white; border: none; border-radius: 50px;
+    padding: 13px 32px; font-family: 'Baloo 2', cursive;
+    font-size: 1.1rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(168,85,247,0.42);
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn.secondary {
+    background: white; color: #7c3aed;
+    border: 2.5px solid #c084fc;
+    box-shadow: 0 4px 12px rgba(168,85,247,0.14);
+  }
+
+  /* card grid */
+  .grid-container { position: relative; z-index: 10; padding: 6px 12px 24px; display: flex; justify-content: center; }
+  #cardGrid { display: grid; gap: 11px; width: 100%; max-width: 600px; }
+
+  /* cards */
+  .card { aspect-ratio: 1; perspective: 600px; cursor: pointer; }
+  .card-inner {
+    position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+    border-radius: var(--card-radius);
+  }
+  .card.flipped .card-inner,
+  .card.matched .card-inner { transform: rotateY(180deg); }
+  .card.matched .card-front { animation: matchPop 0.5s ease forwards; }
+  @keyframes matchPop {
+    0%   { box-shadow: none; }
+    30%  { transform: scale(1.12); box-shadow: 0 0 0 4px #fbbf24, 0 8px 24px rgba(251,191,36,0.5); }
+    100% { transform: scale(1);   box-shadow: 0 0 0 3px #34d399, 0 6px 18px rgba(52,211,153,0.4); }
+  }
+  .card.wrong .card-inner { animation: wrongShake 0.4s ease; }
+  @keyframes wrongShake {
+    0%,100% { transform: rotateY(180deg); }
+    25%     { transform: rotateY(180deg) translateX(-7px); }
+    75%     { transform: rotateY(180deg) translateX( 7px); }
+  }
+  .card-back, .card-front {
+    position: absolute; width: 100%; height: 100%;
+    border-radius: var(--card-radius);
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  }
+  .card-back {
+    background: var(--card-back);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 6px 18px rgba(168,85,247,0.32);
+    border: 3px solid rgba(255,255,255,0.45);
+  }
+  .card-back::after {
+    content: '';
+    position: absolute; inset: 6px;
+    border-radius: 12px;
+    border: 2px dashed rgba(255,255,255,0.38);
+  }
+  .card-front {
+    transform: rotateY(180deg);
+    display: flex; align-items: center; justify-content: center;
+    background: white;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.11);
+    border: 3px solid #f0abfc;
+    overflow: hidden;
+    font-size: clamp(2.2rem, 8vw, 3.4rem);
+  }
+  .card-front img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: calc(var(--card-radius) - 4px);
+  }
+
+  /* win overlay */
+  .win-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(255,240,255,0.93); backdrop-filter: blur(8px);
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px;
+  }
+  .win-overlay.show { display: flex; }
+  .win-emoji { font-size: 5rem; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-18px)} }
+  .win-overlay h2 {
+    font-size: clamp(2rem, 7vw, 3.2rem); font-weight: 900;
+    background: linear-gradient(90deg,#a855f7,#ec4899,#f59e0b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin: 14px 0 8px;
+  }
+  .win-overlay p { font-size: 1.1rem; color: #7c3aed; font-weight: 700; margin-bottom: 5px; }
+  .star-rating { font-size: 2.5rem; margin: 8px 0; }
+  .stars-rain { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .confetti { position: absolute; font-size: 1.8rem; animation: cfFall linear forwards; }
+  @keyframes cfFall {
+    0%   { transform: translateY(-50px) rotate(0deg);   opacity: 1; }
+    100% { transform: translateY(110vh)  rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-stars" id="bgStars"></div>
+
+<!-- WIN OVERLAY -->
+<div class="win-overlay" id="winOverlay">
+  <div class="stars-rain" id="confettiContainer"></div>
+  <div class="win-emoji">🏆</div>
+  <h2>Amazing job!</h2>
+  <p id="winFlips"></p>
+  <p id="winTime"></p>
+  <div class="star-rating" id="starRating"></div>
+  <button class="btn" onclick="restartGame()" style="margin-top:16px;position:relative;z-index:5;">🔄 Play Again</button>
+  <a href="index.html" class="home-btn" style="margin-top:10px;position:relative;z-index:5;">🏠 Home</a>
+</div>
+
+<!-- HEADER -->
+<header>
+  <a href="index.html" class="home-btn">🏠 Home</a>
+  <h1>🌟 Memory Magic 🌟</h1>
+  <div class="header-spacer"></div>
+</header>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-badge" id="flipBadge">🔄 Flips: <span id="flipCount">0</span></div>
+  <div class="stat-badge" id="matchBadge">✨ Matches: <span id="matchCount">0</span></div>
+  <div class="stat-badge">⏱️ <span id="timerDisplay">0:00</span></div>
+</div>
+
+<!-- UPLOAD -->
+<div class="upload-section">
+  <div class="up-title">📸 Upload photos — they become your cards!</div>
+  <div class="upload-row">
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 Choose Photos</button>
+    <span style="font-size:0.8rem;color:#9ca3af;font-weight:700;">or play with emoji cards below</span>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" multiple>
+  <div class="up-status" id="upStatus"></div>
+  <div class="uploaded-thumbs" id="uploadedThumbs"></div>
+</div>
+
+<!-- DIFFICULTY -->
+<div class="difficulty">
+  <button class="diff-btn active" onclick="setDifficulty(8,this)">Easy (8)</button>
+  <button class="diff-btn" onclick="setDifficulty(12,this)">Medium (12)</button>
+  <button class="diff-btn" onclick="setDifficulty(16,this)">Hard (16)</button>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="btn" id="startBtn" onclick="startGame()">🎮 Start Game!</button>
+  <button class="btn secondary" onclick="restartGame()">🔄 Restart</button>
+</div>
+
+<!-- GRID -->
+<div class="grid-container">
+  <div id="cardGrid"></div>
+</div>
+
+<script>
+const DEFAULT_EMOJIS = ['🦄','🐼','🦋','🌸','🦊','🐬','🌈','🍓','🎀','🌺','🐸','🦁','🐙','🦩','🍦','🎠'];
+let uploadedImages = []; // array of base64 data URLs — fully loaded
+let cardCount = 8;
+let flipped = [], matched = 0, flips = 0;
+let lockBoard = false, gameStarted = false;
+let timerInterval = null, secondsElapsed = 0;
+
+// --- BG STARS ---
+const bgStars = document.getElementById('bgStars');
+['⭐','🌟','✨','💫','🌸','🎀'].forEach(s => {
+  for(let j = 0; j < 4; j++) {
+    const el = document.createElement('div');
+    el.className = 'star'; el.textContent = s;
+    el.style.left = Math.random()*100+'%';
+    el.style.animationDuration = (8+Math.random()*12)+'s';
+    el.style.animationDelay   = (Math.random()*16)+'s';
+    el.style.fontSize = (13+Math.random()*12)+'px';
+    bgStars.appendChild(el);
+  }
+});
+
+// --- FILE UPLOAD  (KEY FIX: wait for ALL FileReader callbacks) ---
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const files = Array.from(e.target.files).slice(0, 16);
+  if(files.length === 0) return;
+
+  uploadedImages = [];
+  const thumbsContainer = document.getElementById('uploadedThumbs');
+  const upStatus = document.getElementById('upStatus');
+  thumbsContainer.innerHTML = '';
+  upStatus.textContent = '⏳ Loading images…';
+  document.getElementById('startBtn').disabled = true;
+
+  let loaded = 0;
+  const total = files.length;
+
+  files.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      uploadedImages[idx] = ev.target.result;   // keep order
+      loaded++;
+
+      // thumb
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      img.className = 'thumb';
+      thumbsContainer.appendChild(img);
+
+      if(loaded === total) {
+        // compact: remove any gaps (undefined slots)
+        uploadedImages = uploadedImages.filter(Boolean);
+        upStatus.textContent = `✅ ${uploadedImages.length} photo${uploadedImages.length>1?'s':''} ready!`;
+        document.getElementById('startBtn').disabled = false;
+      }
+    };
+    reader.onerror = () => { loaded++; };
+    reader.readAsDataURL(file);
+  });
+});
+
+// --- DIFFICULTY ---
+function setDifficulty(count, btn) {
+  cardCount = count;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// --- TIMER ---
+function startTimer() {
+  clearInterval(timerInterval);
+  secondsElapsed = 0;
+  timerInterval = setInterval(() => {
+    secondsElapsed++;
+    const m = Math.floor(secondsElapsed/60), s = secondsElapsed%60;
+    document.getElementById('timerDisplay').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  }, 1000);
+}
+
+// --- BUILD GAME ---
+function startGame() {
+  gameStarted = true;
+  flipped = []; matched = 0; flips = 0; lockBoard = false;
+  document.getElementById('flipCount').textContent  = '0';
+  document.getElementById('matchCount').textContent = '0';
+  document.getElementById('timerDisplay').textContent = '0:00';
+  startTimer();
+
+  const pairs = cardCount / 2;
+  let symbols = [];
+
+  if(uploadedImages.length > 0) {
+    // Use uploaded photos; cycle through them if fewer than pairs needed
+    for(let i = 0; i < pairs; i++) {
+      symbols.push({ type: 'image', val: uploadedImages[i % uploadedImages.length] });
+    }
+  } else {
+    symbols = DEFAULT_EMOJIS.slice(0, pairs).map(e => ({ type: 'emoji', val: e }));
+  }
+
+  const cards = [...symbols, ...symbols.map(s => ({...s}))];
+  shuffle(cards);
+
+  const cols = cardCount <= 8 ? 4 : cardCount <= 12 ? 4 : 4;
+  const grid = document.getElementById('cardGrid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+
+  cards.forEach((card, i) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'card';
+    // use index as unique key for matching — same symbol at same original position
+    cardEl.dataset.val  = card.val;
+    cardEl.dataset.type = card.type;
+
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    const back = document.createElement('div');
+    back.className = 'card-back';
+    back.textContent = '🌟';
+
+    const front = document.createElement('div');
+    front.className = 'card-front';
+    if(card.type === 'image') {
+      const img = document.createElement('img');
+      img.src = card.val;
+      front.appendChild(img);
+    } else {
+      front.textContent = card.val;
+    }
+
+    inner.appendChild(back);
+    inner.appendChild(front);
+    cardEl.appendChild(inner);
+    cardEl.addEventListener('click', () => flipCard(cardEl));
+
+    // staggered entrance
+    cardEl.style.opacity = '0';
+    cardEl.style.transform = 'scale(0.5)';
+    cardEl.style.transition = `opacity 0.3s ${i*0.04}s, transform 0.3s ${i*0.04}s`;
+    grid.appendChild(cardEl);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      cardEl.style.opacity = '1';
+      cardEl.style.transform = 'scale(1)';
+    }));
+  });
+}
+
+function shuffle(arr) {
+  for(let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+}
+
+// --- FLIP LOGIC ---
+function flipCard(el) {
+  if(lockBoard) return;
+  if(el.classList.contains('flipped') || el.classList.contains('matched')) return;
+  if(flipped.length >= 2) return;
+
+  el.classList.add('flipped');
+  flipped.push(el);
+
+  if(flipped.length === 2) {
+    flips++;
+    document.getElementById('flipCount').textContent = flips;
+    pulseBadge('flipBadge');
+    lockBoard = true;
+
+    const [a, b] = flipped;
+    const match = a.dataset.val === b.dataset.val && a !== b;
+
+    if(match) {
+      setTimeout(() => {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matched++;
+        document.getElementById('matchCount').textContent = matched;
+        pulseBadge('matchBadge');
+        flipped = []; lockBoard = false;
+        if(matched === cardCount/2) { clearInterval(timerInterval); setTimeout(showWin, 600); }
+      }, 500);
+    } else {
+      a.classList.add('wrong'); b.classList.add('wrong');
+      setTimeout(() => {
+        a.classList.remove('flipped','wrong');
+        b.classList.remove('flipped','wrong');
+        flipped = []; lockBoard = false;
+      }, 1000);
+    }
+  }
+}
+
+function pulseBadge(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+}
+
+// --- WIN ---
+function showWin() {
+  const pairs = cardCount/2;
+  const ratio = pairs/flips;
+  let stars, msg;
+  if(ratio >= 0.75) { stars='⭐⭐⭐'; msg="Perfect Memory! You're amazing! 🏆"; }
+  else if(ratio >= 0.45) { stars='⭐⭐';   msg="Super job! Well done! 🎉"; }
+  else                   { stars='⭐';     msg="Great try! Keep playing! 💪"; }
+
+  const m = Math.floor(secondsElapsed/60), s = secondsElapsed%60;
+  document.getElementById('winFlips').textContent  = `You did it in ${flips} flips! ${msg}`;
+  document.getElementById('winTime').textContent   = `Time: ${m}:${s.toString().padStart(2,'0')} ⏱️`;
+  document.getElementById('starRating').textContent = stars;
+
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  ['🎉','🌟','✨','🎀','💖','🦋','🌸','🍭','🎊','⭐'].forEach((e, i) => {
+    for(let j = 0; j < 3; j++) {
+      const c = document.createElement('div');
+      c.className = 'confetti'; c.textContent = e;
+      c.style.left = Math.random()*100+'%';
+      c.style.fontSize = (1.1+Math.random()*1.4)+'rem';
+      c.style.animationDuration = (2+Math.random()*3)+'s';
+      c.style.animationDelay   = (Math.random()*2)+'s';
+      container.appendChild(c);
+    }
+  });
+  document.getElementById('winOverlay').classList.add('show');
+}
+
+function restartGame() {
+  document.getElementById('winOverlay').classList.remove('show');
+  if(gameStarted) startGame();
+}
+
+window.addEventListener('load', () => startGame());
+</script>
+</body>
+</html>
