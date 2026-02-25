@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🍫 Math Adventure!</title>
+<link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent; }
+  body { font-family:'Nunito',sans-serif;background:linear-gradient(150deg,#fffbf0 0%,#fff0fb 50%,#f0fdf4 100%);min-height:100vh;overflow-x:hidden; }
+
+  /* HEADER */
+  header { background:linear-gradient(90deg,#f97316,#ec4899);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(249,115,22,0.40);position:relative;z-index:10; }
+  .home-btn { background:rgba(255,255,255,0.22);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:50px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:0.88rem;cursor:pointer;text-decoration:none;display:inline-block; }
+  header h1 { font-family:'Bubblegum Sans',cursive;font-size:clamp(1.3rem,4.5vw,2.2rem);color:white;text-shadow:2px 3px 0 rgba(0,0,0,0.15);letter-spacing:1px;flex:1;text-align:center; }
+  .hsp { width:70px; }
+
+  /* MODE SELECTOR */
+  .mode-selector { position:relative;z-index:10;display:flex;justify-content:center;gap:12px;padding:14px 16px;flex-wrap:wrap; }
+  .mode-btn { background:white;border:3px solid #fdba74;border-radius:20px;padding:10px 20px;cursor:pointer;transition:all 0.2s;font-family:'Bubblegum Sans',cursive;font-size:1rem;color:#92400e;box-shadow:0 4px 12px rgba(0,0,0,0.08);text-align:center; }
+  .mode-btn .mi { font-size:1.8rem;display:block;margin-bottom:3px; }
+  .mode-btn.active { background:linear-gradient(135deg,#fed7aa,#fbbf24);border-color:#f59e0b;transform:scale(1.05);box-shadow:0 6px 20px rgba(245,158,11,0.35); }
+
+  /* SCORE BAR */
+  .score-bar { position:relative;z-index:10;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:0 16px 10px; }
+  .score-chip { background:white;border-radius:50px;padding:7px 16px;font-weight:900;font-size:0.9rem;color:#c2410c;box-shadow:0 3px 10px rgba(249,115,22,0.18);border:2px solid #fed7aa; }
+  .score-chip.pop { animation:popChip 0.3s ease; }
+  @keyframes popChip { 0%,100%{transform:scale(1)}50%{transform:scale(1.3)} }
+
+  /* ==== SHOP GAME ==== */
+  #shopGame { display:none; }
+  .shop-scene { position:relative;z-index:10;margin:0 12px 14px;background:linear-gradient(180deg,#fef9c3,#fff7ed);border-radius:24px;padding:16px;border:3px solid #fbbf24;box-shadow:0 6px 24px rgba(0,0,0,0.08); }
+  .shop-header { font-family:'Bubblegum Sans',cursive;font-size:1.3rem;color:#92400e;text-align:center;margin-bottom:12px; }
+  .candy-shelf { display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:14px; }
+  .candy-item { background:white;border-radius:16px;padding:10px 12px;text-align:center;cursor:pointer;transition:all 0.2s;border:2.5px solid #fde68a;min-width:68px;box-shadow:0 3px 10px rgba(0,0,0,0.08); }
+  .candy-item:active { transform:scale(0.92); }
+  .candy-item .ce { font-size:2rem;display:block; }
+  .candy-item .cn { font-size:0.72rem;font-weight:900;color:#78350f;margin:2px 0; }
+  .candy-item .cp { font-family:'Bubblegum Sans',cursive;font-size:1rem;color:#d97706; }
+  .candy-item.in-basket { border-color:#34d399;background:#ecfdf5; }
+  .basket-area { background:white;border-radius:16px;padding:12px 14px;border:2.5px dashed #f59e0b; }
+  .basket-title { font-family:'Bubblegum Sans',cursive;font-size:1rem;color:#b45309;margin-bottom:8px; }
+  #basketItems { display:flex;flex-wrap:wrap;gap:6px;min-height:36px;margin-bottom:8px; }
+  .basket-item { background:#fffbeb;border:2px solid #fde68a;border-radius:50px;padding:4px 10px;font-size:0.82rem;font-weight:900;color:#92400e;display:flex;align-items:center;gap:4px; }
+  .rm-btn { width:17px;height:17px;background:#fca5a5;border-radius:50%;font-size:0.65rem;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7f1d1d;font-weight:900; }
+  .basket-total { font-family:'Bubblegum Sans',cursive;font-size:1.05rem;color:#b45309;text-align:right; }
+  .pay-btn { display:block;width:100%;margin-top:10px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:50px;padding:11px;font-family:'Bubblegum Sans',cursive;font-size:1.05rem;cursor:pointer;box-shadow:0 5px 16px rgba(16,185,129,0.40);transition:transform 0.15s; }
+  .pay-btn:active { transform:scale(0.96); }
+
+  /* payment modal */
+  .pay-modal { display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:20px; }
+  .pay-modal.show { display:flex; }
+  .pay-card { background:white;border-radius:28px;padding:24px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn 0.3s ease; }
+  @keyframes popIn { from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1} }
+  .pay-card h3 { font-family:'Bubblegum Sans',cursive;font-size:1.4rem;color:#1e3a8a;margin-bottom:6px; }
+  .pay-card p { color:#6b7280;font-size:0.9rem;font-weight:700;margin-bottom:16px; }
+  .pay-opts { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+  .pay-opt { background:#f0fdf4;border:3px solid #86efac;border-radius:16px;padding:14px;font-family:'Bubblegum Sans',cursive;font-size:1.5rem;color:#166534;cursor:pointer;transition:all 0.2s; }
+  .pay-opt:active { transform:scale(0.94); }
+  .pay-opt.correct { background:#dcfce7;border-color:#22c55e;animation:cFlash 0.4s ease; }
+  .pay-opt.wrong   { background:#fee2e2;border-color:#f87171;animation:shakeOpt 0.4s ease; }
+  @keyframes cFlash { 0%,100%{transform:scale(1)}50%{transform:scale(1.1)} }
+  @keyframes shakeOpt { 0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)} }
+  .pay-cancel { margin-top:12px;background:none;border:2px solid #d1d5db;border-radius:50px;padding:8px 22px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;color:#6b7280; }
+
+  /* ==== BRIDGE / RAFT GAME ==== */
+  #bridgeGame { display:none; }
+
+  .valley-scene { position:relative;z-index:10;margin:0 12px 12px;border-radius:24px;overflow:hidden;border:3px solid #7dd3fc;box-shadow:0 6px 24px rgba(0,0,0,0.10); }
+  #valleySVG { width:100%;display:block;max-height:260px; }
+
+  /* question bubble */
+  .question-bubble { position:relative;z-index:10;margin:0 12px 10px;background:white;border-radius:20px;padding:12px 18px;border:3px solid #fbbf24;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.08); }
+  .question-bubble .q-label { font-family:'Bubblegum Sans',cursive;font-size:0.9rem;color:#92400e;margin-bottom:2px; }
+  .question-bubble .q-text  { font-family:'Bubblegum Sans',cursive;font-size:1.5rem;color:#1e3a8a; }
+
+  /* weight panel */
+  .weight-panel { position:relative;z-index:10;background:white;border-radius:20px;margin:0 12px 12px;padding:14px 16px;border:3px solid #bfdbfe;box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+  .wp-title { font-family:'Bubblegum Sans',cursive;font-size:1rem;color:#1e3a8a;text-align:center;margin-bottom:10px; }
+  .weight-boxes { display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px; }
+  .weight-box { background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:2.5px solid #60a5fa;border-radius:14px;padding:9px 14px;cursor:pointer;transition:all 0.2s;font-family:'Bubblegum Sans',cursive;font-size:1.05rem;color:#1e3a8a;min-width:56px;text-align:center; }
+  .weight-box:active { transform:scale(0.92); }
+  .weight-box.on-raft { background:linear-gradient(135deg,#bbf7d0,#6ee7b7);border-color:#22c55e; }
+
+  .scale-row { background:#f0f9ff;border-radius:14px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px; }
+  .scale-info { font-weight:900;color:#0369a1;font-size:0.9rem; }
+  .scale-info span { font-family:'Bubblegum Sans',cursive;font-size:1.25rem;color:#0284c7; }
+  .lives-display { display:flex;gap:3px;font-size:1.3rem; }
+  .check-btn { background:linear-gradient(135deg,#f97316,#ec4899);color:white;border:none;border-radius:50px;padding:9px 22px;font-family:'Bubblegum Sans',cursive;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(249,115,22,0.40);transition:transform 0.15s; }
+  .check-btn:active { transform:scale(0.94); }
+  .clear-btn { background:white;border:2px solid #fca5a5;border-radius:50px;padding:7px 16px;font-family:'Nunito',sans-serif;font-weight:700;color:#ef4444;cursor:pointer;font-size:0.88rem; }
+
+  /* feedback */
+  .feedback { position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)scale(0);background:white;border-radius:24px;padding:24px 28px;text-align:center;z-index:400;box-shadow:0 20px 60px rgba(0,0,0,0.3);transition:transform 0.3s ease;pointer-events:none;max-width:320px;width:90%; }
+  .feedback.show { transform:translate(-50%,-50%)scale(1);pointer-events:all; }
+  .fb-icon { font-size:3.8rem; }
+  .feedback h3 { font-family:'Bubblegum Sans',cursive;font-size:1.5rem;margin:10px 0 6px; }
+  .feedback p { font-weight:700;color:#6b7280;font-size:0.95rem; }
+  .fb-btn { margin-top:14px;background:linear-gradient(135deg,#f97316,#ec4899);color:white;border:none;border-radius:50px;padding:11px 28px;font-family:'Bubblegum Sans',cursive;font-size:1rem;cursor:pointer; }
+
+  /* win overlay */
+  .win-overlay { display:none;position:fixed;inset:0;z-index:500;background:rgba(255,251,235,0.95);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px; }
+  .win-overlay.show { display:flex; }
+  .win-big { font-size:5rem;animation:spinBig 1s ease infinite alternate; }
+  @keyframes spinBig { from{transform:rotate(-10deg)scale(1)}to{transform:rotate(10deg)scale(1.15)} }
+  .win-overlay h2 { font-family:'Bubblegum Sans',cursive;font-size:clamp(2rem,6vw,3rem);color:#f97316;margin:14px 0 8px; }
+  .win-overlay p { font-size:1.05rem;color:#92400e;font-weight:700;margin:4px 0; }
+  .win-row { display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:12px 0; }
+  .win-stat { background:white;border-radius:50px;padding:8px 18px;font-weight:900;color:#c2410c;border:2px solid #fed7aa; }
+  .win-btn { margin-top:14px;background:linear-gradient(135deg,#f97316,#ec4899);color:white;border:none;border-radius:50px;padding:13px 34px;font-family:'Bubblegum Sans',cursive;font-size:1.05rem;cursor:pointer;box-shadow:0 6px 18px rgba(249,115,22,0.45); }
+  .cf { position:absolute;font-size:1.6rem;animation:cfFall linear forwards;pointer-events:none; }
+  @keyframes cfFall { from{transform:translateY(-50px)rotate(0deg);opacity:1}to{transform:translateY(110vh)rotate(720deg);opacity:0} }
+</style>
+</head>
+<body>
+
+<!-- WIN -->
+<div class="win-overlay" id="winOverlay">
+  <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;" id="cfWrap"></div>
+  <div class="win-big">🎉</div>
+  <h2 id="winTitle">You're a Math Star!</h2>
+  <p id="winMsg"></p>
+  <div class="win-row">
+    <div class="win-stat" id="winScore"></div>
+    <div class="win-stat" id="winStreak"></div>
+  </div>
+  <button class="win-btn" onclick="resetAll()">🎮 Play Again!</button>
+  <a href="home.html" style="margin-top:10px;display:inline-block;color:#f97316;font-weight:900;font-size:1rem;text-decoration:none;">🏠 Home</a>
+</div>
+
+<!-- FEEDBACK -->
+<div class="feedback" id="feedback">
+  <div class="fb-icon" id="fbIcon"></div>
+  <h3 id="fbTitle"></h3>
+  <p id="fbMsg"></p>
+  <button class="fb-btn" onclick="closeFeedback()">Next ➡️</button>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="pay-modal" id="payModal">
+  <div class="pay-card">
+    <h3>🧾 Time to Pay!</h3>
+    <p id="payQ"></p>
+    <div class="pay-opts" id="payOpts"></div>
+    <button class="pay-cancel" onclick="closePayment()">← Back</button>
+  </div>
+</div>
+
+<header>
+  <a href="home.html" class="home-btn">🏠 Home</a>
+  <h1>🍫 Math Adventure! 🌉</h1>
+  <div class="hsp"></div>
+</header>
+
+<div class="mode-selector">
+  <div class="mode-btn active" id="btnShop" onclick="setMode('shop')">
+    <span class="mi">🍫</span>
+    Candy Shop<br><small style="font-size:0.72rem;font-family:Nunito,sans-serif;font-weight:700;">Addition</small>
+  </div>
+  <div class="mode-btn" id="btnBridge" onclick="setMode('bridge')">
+    <span class="mi">🏔️</span>
+    Valley Raft<br><small style="font-size:0.72rem;font-family:Nunito,sans-serif;font-weight:700;">All Maths!</small>
+  </div>
+</div>
+
+<div class="score-bar">
+  <div class="score-chip" id="scoreChip">⭐ Score: <span id="scoreVal">0</span></div>
+  <div class="score-chip" id="streakChip">🔥 Streak: <span id="streakVal">0</span></div>
+  <div class="score-chip">❓ Round: <span id="roundVal">1</span>/10</div>
+</div>
+
+<!-- ===== SHOP ===== -->
+<div id="shopGame">
+  <div class="shop-scene">
+    <div class="shop-header">🏪 Welcome to the Candy Shop!</div>
+    <div class="candy-shelf" id="candyShelf"></div>
+    <div class="basket-area">
+      <div class="basket-title">🧺 Your Basket</div>
+      <div id="basketItems"></div>
+      <div class="basket-total">Total: ₹<span id="basketTotal">0</span></div>
+      <button class="pay-btn" onclick="openPayment()">💰 Pay Now!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VALLEY RAFT ===== -->
+<div id="bridgeGame">
+  <!-- Animated SVG Valley Scene -->
+  <div class="valley-scene">
+    <svg id="valleySVG" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="skyG" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#93c5fd"/>
+          <stop offset="100%" style="stop-color:#bfdbfe"/>
+        </linearGradient>
+        <linearGradient id="waterG" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#38bdf8"/>
+          <stop offset="100%" style="stop-color:#0284c7"/>
+        </linearGradient>
+        <linearGradient id="cliffLG" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#4ade80"/>
+          <stop offset="100%" style="stop-color:#16a34a"/>
+        </linearGradient>
+        <linearGradient id="cliffRG" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#4ade80"/>
+          <stop offset="100%" style="stop-color:#16a34a"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Sky -->
+      <rect width="400" height="240" fill="url(#skyG)"/>
+
+      <!-- Clouds -->
+      <g opacity="0.75">
+        <ellipse cx="70" cy="32" rx="32" ry="15" fill="white"/>
+        <ellipse cx="90" cy="27" rx="22" ry="13" fill="white"/>
+        <ellipse cx="50" cy="30" rx="18" ry="11" fill="white"/>
+      </g>
+      <g opacity="0.65">
+        <ellipse cx="300" cy="25" rx="28" ry="13" fill="white"/>
+        <ellipse cx="318" cy="21" rx="20" ry="11" fill="white"/>
+        <ellipse cx="283" cy="23" rx="16" ry="9" fill="white"/>
+      </g>
+
+      <!-- SUN with face -->
+      <g id="sunG" transform="translate(370,36)">
+        <circle r="22" fill="#fbbf24"/>
+        <!-- Rays -->
+        <line x1="0" y1="-27" x2="0" y2="-33" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+        <line x1="19" y1="-19" x2="23" y2="-23" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+        <line x1="27" y1="0" x2="33" y2="0" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+        <line x1="19" y1="19" x2="23" y2="23" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+        <line x1="-19" y1="-19" x2="-23" y2="-23" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+        <line x1="-27" y1="0" x2="-33" y2="0" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/>
+        <!-- Face -->
+        <circle cx="-7" cy="-4" r="3" fill="#92400e"/>
+        <circle cx="7" cy="-4" r="3" fill="#92400e"/>
+        <path d="M-7 7 Q0 15 7 7" stroke="#92400e" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- Left cliff -->
+      <polygon points="0,240 0,90 95,90 75,240" fill="url(#cliffLG)"/>
+      <ellipse cx="46" cy="90" rx="50" ry="10" fill="#4ade80"/>
+      <!-- Grass detail -->
+      <path d="M0 90 Q20 82 40 90 Q55 96 75 90" fill="none" stroke="#86efac" stroke-width="2"/>
+
+      <!-- Right cliff -->
+      <polygon points="305,90 400,90 400,240 325,240" fill="url(#cliffRG)"/>
+      <ellipse cx="354" cy="90" rx="50" ry="10" fill="#4ade80"/>
+      <path d="M325 90 Q345 82 365 90 Q382 96 400 90" fill="none" stroke="#86efac" stroke-width="2"/>
+
+      <!-- Valley / river -->
+      <rect x="75" y="155" width="250" height="85" fill="url(#waterG)" rx="0"/>
+      <path d="M75 170 Q125 158 175 170 Q225 182 275 170 Q300 163 325 170" stroke="#7dd3fc" stroke-width="2.5" fill="none"/>
+      <path d="M75 185 Q110 175 150 185 Q195 198 240 185 Q280 174 325 185" stroke="#bae6fd" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+      <!-- ===== PULLEY SYSTEM ===== -->
+      <!-- Left pulley pole -->
+      <line x1="85" y1="90" x2="85" y2="55" stroke="#78350f" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="85" cy="54" r="7" fill="#a16207" stroke="#78350f" stroke-width="2"/>
+      <!-- Right pulley pole -->
+      <line x1="315" y1="90" x2="315" y2="55" stroke="#78350f" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="315" cy="54" r="7" fill="#a16207" stroke="#78350f" stroke-width="2"/>
+
+      <!-- Rope over pulleys — dynamic, goes from left pulley over to right, with raft hanging in middle -->
+      <!-- Left rope segment: from pulley to weight bucket (left side) -->
+      <line id="ropeLeft"  x1="85" y1="54" x2="170" y2="90" stroke="#a16207" stroke-width="2.5" stroke-dasharray="4,3" stroke-linecap="round"/>
+      <!-- Right rope segment: from pulley to right anchor -->
+      <line id="ropeRight" x1="315" y1="54" x2="230" y2="90" stroke="#a16207" stroke-width="2.5" stroke-dasharray="4,3" stroke-linecap="round"/>
+      <!-- Centre hang rope -->
+      <line id="raftRope" x1="200" y1="62" x2="200" y2="120" stroke="#a16207" stroke-width="2.5"/>
+
+      <!-- RAFT — dynamically positioned -->
+      <g id="raftGroup" transform="translate(200,120)">
+        <!-- Raft platform -->
+        <rect x="-45" y="0" width="90" height="18" rx="5" fill="#d97706" stroke="#92400e" stroke-width="2"/>
+        <line x1="-35" y1="0" x2="-35" y2="18" stroke="#92400e" stroke-width="1.5"/>
+        <line x1="-15" y1="0" x2="-15" y2="18" stroke="#92400e" stroke-width="1.5"/>
+        <line x1="5"   y1="0" x2="5"   y2="18" stroke="#92400e" stroke-width="1.5"/>
+        <line x1="25"  y1="0" x2="25"  y2="18" stroke="#92400e" stroke-width="1.5"/>
+        <!-- Weight display on raft -->
+        <text id="raftWeightText" x="0" y="13" text-anchor="middle" font-family="Bubblegum Sans,cursive" font-size="10" fill="white" font-weight="bold">0 kg</text>
+        <!-- Daughter on raft -->
+        <text x="0" y="-4" text-anchor="middle" font-size="18">👧</text>
+      </g>
+
+      <!-- Weight bucket on left rope (shows added weights) -->
+      <g id="weightBucket" transform="translate(158,108)">
+        <rect x="-16" y="0" width="32" height="24" rx="4" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+        <line x1="-12" y1="0" x2="-8" y2="-10" stroke="#f59e0b" stroke-width="2"/>
+        <line x1="12" y1="0" x2="8" y2="-10" stroke="#f59e0b" stroke-width="2"/>
+        <line x1="-8" y1="-10" x2="8" y2="-10" stroke="#f59e0b" stroke-width="2"/>
+        <text id="bucketText" x="0" y="16" text-anchor="middle" font-family="Bubblegum Sans,cursive" font-size="9" fill="#92400e">0kg</text>
+      </g>
+
+      <!-- Parent characters on left cliff -->
+      <text x="28" y="83" font-size="22">😊</text>
+      <text x="52" y="83" font-size="22">😍</text>
+      <text x="38" y="72" text-anchor="middle" font-family="Nunito,sans-serif" font-size="8" fill="#166534" font-weight="900">Amma &amp; Appa</text>
+
+      <!-- Target zone indicator -->
+      <line id="targetLine" x1="85" y1="155" x2="315" y2="155" stroke="#22c55e" stroke-width="2" stroke-dasharray="6,4" opacity="0.6"/>
+      <text x="200" y="151" text-anchor="middle" font-family="Nunito,sans-serif" font-size="8" fill="#166534" font-weight="900" opacity="0.7">🎯 Safe crossing level</text>
+
+      <!-- Status indicator arrow on raft -->
+      <text id="raftStatus" x="200" y="88" text-anchor="middle" font-size="14" opacity="0">⬇️</text>
+    </svg>
+  </div>
+
+  <div class="question-bubble">
+    <div class="q-label">☀️ The Sun says — solve this to raise the raft to the crossing level!</div>
+    <div class="q-text" id="qText">Loading…</div>
+  </div>
+
+  <div class="weight-panel">
+    <div class="wp-title" id="wpTitle">🏋️ Add weights to the pulley bucket to raise the raft!</div>
+    <div class="weight-boxes" id="weightBoxes"></div>
+    <div class="scale-row">
+      <div class="scale-info">⚖️ Bucket: <span id="currentWeight">0</span> kg</div>
+      <div class="lives-display" id="livesDisplay">❤️❤️❤️</div>
+      <button class="clear-btn" onclick="clearWeights()">🗑️ Clear</button>
+      <button class="check-btn" onclick="checkBridge()">✅ Check!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== SHARED =====
+let score=0,streak=0,round=1,maxRounds=10;
+let currentMode='shop';
+
+function updateScoreUI(){
+  document.getElementById('scoreVal').textContent=score;
+  document.getElementById('streakVal').textContent=streak;
+  document.getElementById('roundVal').textContent=round;
+}
+function popChip(id){const el=document.getElementById(id);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
+
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('shopGame').style.display=mode==='shop'?'block':'none';
+  document.getElementById('bridgeGame').style.display=mode==='bridge'?'block':'none';
+  document.getElementById('btnShop').classList.toggle('active',mode==='shop');
+  document.getElementById('btnBridge').classList.toggle('active',mode==='bridge');
+  if(mode==='shop')setupShop();else setupBridge();
+}
+
+function resetAll(){
+  score=0;streak=0;round=1;
+  document.getElementById('winOverlay').classList.remove('show');
+  updateScoreUI();
+  if(currentMode==='shop')setupShop();else setupBridge();
+}
+
+function showConfetti(){
+  const cf=document.getElementById('cfWrap');cf.innerHTML='';
+  '🎉🌟✨🍫🎊💖⭐🌈🎀🏅'.split('').forEach(e=>{
+    const el=document.createElement('div');el.className='cf';el.textContent=e;
+    el.style.left=Math.random()*100+'%';el.style.animationDuration=(2+Math.random()*3)+'s';el.style.animationDelay=(Math.random()*2)+'s';
+    cf.appendChild(el);
+  });
+}
+
+// ===========================
+// ====== SHOP GAME ==========
+// ===========================
+const CANDIES=[
+  {emoji:'🍬',name:'Lollipop',price:3},{emoji:'🍫',name:'Chocolate',price:5},
+  {emoji:'🍭',name:'Candy',price:2},{emoji:'🧁',name:'Cupcake',price:8},
+  {emoji:'🍩',name:'Donut',price:6},{emoji:'🍪',name:'Cookie',price:4},
+  {emoji:'🍦',name:'Ice Cream',price:7},{emoji:'🎂',name:'Cake',price:10},
+];
+let basket=[];
+
+function setupShop(){basket=[];renderShelf();renderBasket();}
+
+function renderShelf(){
+  const shelf=document.getElementById('candyShelf');shelf.innerHTML='';
+  [...CANDIES].sort(()=>Math.random()-0.5).slice(0,5).forEach(c=>{
+    const el=document.createElement('div');el.className='candy-item';
+    el.innerHTML=`<span class="ce">${c.emoji}</span><span class="cn">${c.name}</span><span class="cp">₹${c.price}</span>`;
+    el.onclick=()=>{basket.push(c);el.classList.add('in-basket');setTimeout(()=>el.classList.remove('in-basket'),400);renderBasket();};
+    shelf.appendChild(el);
+  });
+}
+
+function removeFromBasket(idx){basket.splice(idx,1);renderBasket();}
+function getTotal(){return basket.reduce((s,c)=>s+c.price,0);}
+
+function renderBasket(){
+  const items=document.getElementById('basketItems');items.innerHTML='';
+  basket.forEach((c,i)=>{
+    const el=document.createElement('div');el.className='basket-item';
+    el.innerHTML=`${c.emoji} ${c.name} ₹${c.price} <span class="rm-btn" onclick="removeFromBasket(${i})">✕</span>`;
+    items.appendChild(el);
+  });
+  document.getElementById('basketTotal').textContent=getTotal();
+}
+
+function openPayment(){
+  if(basket.length===0){showFeedback('🛒','Oops!','Add some candies to your basket first!');return;}
+  const total=getTotal();
+  document.getElementById('payQ').innerHTML=`${basket.map(c=>c.emoji).join(' ')}<br>How much do you pay?`;
+  const opts=new Set([total]);
+  while(opts.size<4){const v=total+Math.floor(Math.random()*7)-3;if(v>0&&v!==total)opts.add(v);}
+  const container=document.getElementById('payOpts');container.innerHTML='';
+  [...opts].sort(()=>Math.random()-0.5).forEach(v=>{
+    const btn=document.createElement('div');btn.className='pay-opt';btn.textContent=`₹${v}`;
+    btn.onclick=()=>checkPayment(v,total,btn);container.appendChild(btn);
+  });
+  document.getElementById('payModal').classList.add('show');
+}
+
+function checkPayment(val,correct,btn){
+  if(val===correct){
+    btn.classList.add('correct');score+=10+streak*2;streak++;
+    popChip('scoreChip');popChip('streakChip');updateScoreUI();
+    setTimeout(()=>{closePayment();showFeedback('🎉','Correct!',`₹${correct} is right! 🌟 +${10+(streak-1)*2} points`);},500);
+  }else{
+    btn.classList.add('wrong');streak=0;updateScoreUI();
+    setTimeout(()=>btn.classList.remove('wrong'),500);
+    showFeedback('😅','Not quite!',`The correct answer was ₹${correct}. Try again!`);
+    setTimeout(()=>{closePayment();setupShop();},1200);
+  }
+  round++;if(round>maxRounds)setTimeout(showWinScreen,800);
+}
+function closePayment(){document.getElementById('payModal').classList.remove('show');}
+
+// ===========================
+// ====== BRIDGE/RAFT GAME ===
+// ===========================
+let targetW=0,addedWeights=[],bridgeLives=3,bridgeRound=0;
+// Raft Y position: 120 = resting low, 60 = at crossing level (155 in SVG coords, but raftGroup is positioned differently)
+// RAFT_LOW = far from crossing, RAFT_CROSS = at the safe crossing line
+const RAFT_LOW = 145;   // y translate for raftGroup when no weight / wrong
+const RAFT_HIGH = 108;  // y translate when too heavy (overshoots)
+const RAFT_CROSS = 128; // y translate at correct weight (aligns with dashed line at SVG y=155, raftGroup is 18px tall)
+
+function setupBridge(){addedWeights=[];bridgeLives=3;bridgeRound=0;renderLives();nextChallenge();}
+
+function nextChallenge(){
+  addedWeights=[];
+  document.getElementById('currentWeight').textContent='0';
+  document.getElementById('bucketText').textContent='0kg';
+  updateRaftPosition(RAFT_LOW);
+
+  // Generate question
+  const ops=['+','-','×'];
+  const op=ops[Math.floor(Math.random()*ops.length)];
+  let a,b,questionText;
+  if(op==='+'){a=Math.floor(Math.random()*10)+1;b=Math.floor(Math.random()*10)+1;targetW=a+b;questionText=`${a} + ${b} = ?`;}
+  else if(op==='-'){a=Math.floor(Math.random()*10)+5;b=Math.floor(Math.random()*(a-1))+1;targetW=a-b;questionText=`${a} − ${b} = ?`;}
+  else{a=Math.floor(Math.random()*5)+1;b=Math.floor(Math.random()*5)+1;targetW=a*b;questionText=`${a} × ${b} = ?`;}
+
+  document.getElementById('qText').textContent=questionText;
+  document.getElementById('wpTitle').textContent=`🏋️ Add weights totalling the answer to raise the raft to the crossing level!`;
+
+  // Generate weight boxes — always include pieces that sum to target + some distractors
+  renderWeightBoxes(targetW);
+}
+
+function renderWeightBoxes(target){
+  const container=document.getElementById('weightBoxes');container.innerHTML='';
+  // Generate a variety of weights (1,2,3,5,10) sufficient to build the answer
+  const pool=[1,2,3,5,10,1,2,5];
+  const shown=new Set();
+  // Ensure we have weights that can add up
+  const available=pool.filter(v=>v<=target).concat([1,2,3]).filter((v,i,arr)=>arr.indexOf(v)===i).sort((a,b)=>a-b);
+  available.forEach(w=>{
+    for(let copy=0;copy<2;copy++){
+      const el=document.createElement('div');el.className='weight-box';
+      el.innerHTML=`🏋️ ${w}kg`;
+      el.onclick=()=>{addWeight(w,el);};
+      container.appendChild(el);
+    }
+  });
+}
+
+function addWeight(w,el){
+  addedWeights.push(w);
+  el.classList.add('on-raft');
+  setTimeout(()=>el.classList.remove('on-raft'),300);
+  const total=addedWeights.reduce((s,v)=>s+v,0);
+  document.getElementById('currentWeight').textContent=total;
+  document.getElementById('bucketText').textContent=total+'kg';
+
+  // Animate raft rising proportionally
+  const ratio=Math.min(total/targetW,1.3);
+  const raftY=RAFT_LOW-(RAFT_LOW-RAFT_CROSS)*ratio;
+  updateRaftPosition(raftY);
+
+  // Rope visual update
+  updateRopeVisual(total);
+}
+
+function updateRaftPosition(y){
+  const raftGroup=document.getElementById('raftGroup');
+  const raftRope=document.getElementById('raftRope');
+  raftGroup.setAttribute('transform',`translate(200,${y})`);
+  // rope from pulley centre (200,62) to top of raft
+  raftRope.setAttribute('y2',y);
+  // status icon
+  const status=document.getElementById('raftStatus');
+  status.setAttribute('y',y-8);
+}
+
+function updateRopeVisual(totalKg){
+  // Make ropes tighter as weight increases
+  const tension=Math.min(totalKg/targetW,1.2);
+  const liftY=54+tension*15; // rope attachment points rise as pulley is loaded
+  document.getElementById('ropeLeft').setAttribute('y1',liftY);
+  document.getElementById('ropeRight').setAttribute('y1',liftY);
+}
+
+function clearWeights(){
+  addedWeights=[];
+  document.getElementById('currentWeight').textContent='0';
+  document.getElementById('bucketText').textContent='0kg';
+  updateRaftPosition(RAFT_LOW);
+  updateRopeVisual(0);
+  document.querySelectorAll('.weight-box').forEach(b=>b.classList.remove('on-raft'));
+}
+
+function checkBridge(){
+  const total=addedWeights.reduce((s,v)=>s+v,0);
+  if(total===targetW){
+    // Perfect! Raft reaches crossing level
+    updateRaftPosition(RAFT_CROSS);
+    score+=15+streak*3;streak++;popChip('scoreChip');popChip('streakChip');updateScoreUI();
+    bridgeRound++;round++;
+
+    // Flash raft green
+    const raftGroup=document.getElementById('raftGroup');
+    raftGroup.style.filter='drop-shadow(0 0 8px #22c55e)';
+    setTimeout(()=>{raftGroup.style.filter='';},800);
+
+    showFeedback('🌉','Raft Raised!',`${total} kg is exactly right! The raft reaches the other side! +${15+(streak-1)*3} pts`);
+    if(round>maxRounds)setTimeout(showWinScreen,1000);
+  } else if(total>targetW){
+    bridgeLives--;streak=0;renderLives();updateScoreUI();
+    // Raft goes too high!
+    updateRaftPosition(RAFT_HIGH);
+    const s=document.getElementById('raftStatus');s.textContent='⬆️';s.setAttribute('opacity','1');
+    showFeedback('⬆️','Too Heavy!',`${total} kg is too much — the raft flies up! Answer was ${targetW} kg.`);
+    setTimeout(()=>s.setAttribute('opacity','0'),2000);
+    if(bridgeLives<=0){setTimeout(()=>{bridgeLives=3;renderLives();nextChallenge();},1500);}
+  } else {
+    bridgeLives--;streak=0;renderLives();updateScoreUI();
+    // Raft too low — stays near bottom
+    const lowY=RAFT_LOW+15;
+    updateRaftPosition(lowY);
+    const s=document.getElementById('raftStatus');s.textContent='⬇️';s.setAttribute('opacity','1');
+    showFeedback('⬇️','Too Light!',`${total} kg is not enough — the raft stays too low! Answer was ${targetW} kg.`);
+    setTimeout(()=>s.setAttribute('opacity','0'),2000);
+    if(bridgeLives<=0){setTimeout(()=>{bridgeLives=3;renderLives();nextChallenge();},1500);}
+  }
+}
+
+function renderLives(){
+  document.getElementById('livesDisplay').innerHTML='❤️'.repeat(bridgeLives)+'🤍'.repeat(Math.max(0,3-bridgeLives));
+}
+
+// ===========================
+// ===== FEEDBACK ============
+// ===========================
+function showFeedback(icon,title,msg){
+  document.getElementById('fbIcon').textContent=icon;
+  document.getElementById('fbTitle').textContent=title;
+  document.getElementById('fbMsg').textContent=msg;
+  document.getElementById('feedback').classList.add('show');
+}
+function closeFeedback(){
+  document.getElementById('feedback').classList.remove('show');
+  if(currentMode==='shop'){basket=[];renderShelf();renderBasket();}
+  else nextChallenge();
+}
+
+// ===========================
+// ===== WIN SCREEN ==========
+// ===========================
+function showWinScreen(){
+  document.getElementById('winTitle').textContent=score>80?'🌟 Math Superstar!':'🎉 Well Done!';
+  document.getElementById('winMsg').textContent=score>80?'Amazing maths skills!':'Great job completing all rounds!';
+  document.getElementById('winScore').textContent=`⭐ Score: ${score}`;
+  document.getElementById('winStreak').textContent=`🔥 Best Streak: ${streak}`;
+  showConfetti();
+  document.getElementById('winOverlay').classList.add('show');
+}
+
+window.addEventListener('load',()=>setMode('shop'));
+</script>
+</body>
+</html>
