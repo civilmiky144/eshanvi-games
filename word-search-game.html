@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🔤 Word Hunt!</title>
+<link href="https://fonts.googleapis.com/css2?family=Chewy&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --cell: clamp(30px, 7.5vw, 42px); }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  body { font-family: 'Quicksand', sans-serif; background: linear-gradient(160deg, #f0fdf4 0%, #fef9c3 60%, #fdf4ff 100%); min-height: 100vh; overflow-x: hidden; }
+
+  .bg-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .deco-item { position: absolute; font-size: 1.8rem; opacity: 0.07; animation: floatDeco linear infinite; }
+  @keyframes floatDeco { from{transform:translateY(110vh)rotate(0deg)} to{transform:translateY(-10vh)rotate(360deg)} }
+
+  header { position:relative;z-index:10;background:linear-gradient(90deg,#10b981,#059669);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(16,185,129,0.45); }
+  .home-btn { background:rgba(255,255,255,0.22);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:50px;padding:7px 14px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;text-decoration:none;display:inline-block; }
+  header h1 { font-family:'Chewy',cursive;font-size:clamp(1.5rem,5vw,2.4rem);color:white;letter-spacing:2px;text-shadow:2px 3px 0 rgba(0,0,0,0.15);flex:1;text-align:center; }
+  .hsp { width:70px; }
+
+  .controls-row { position:relative;z-index:10;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;flex-wrap:wrap; }
+  .level-btn { border:2.5px solid #10b981;background:white;color:#059669;border-radius:50px;padding:7px 18px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;transition:all 0.2s; }
+  .level-btn.active { background:linear-gradient(135deg,#10b981,#059669);color:white;border-color:transparent;box-shadow:0 4px 12px rgba(16,185,129,0.40); }
+  .new-btn { background:linear-gradient(135deg,#f59e0b,#f97316);color:white;border:none;border-radius:50px;padding:10px 28px;font-family:'Chewy',cursive;font-size:1.05rem;cursor:pointer;letter-spacing:0.5px;box-shadow:0 5px 16px rgba(245,158,11,0.40);transition:transform 0.15s; }
+  .new-btn:active { transform:scale(0.95); }
+
+  .stats-row { position:relative;z-index:10;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 16px 8px; }
+  .stat-chip { background:white;border-radius:50px;padding:6px 16px;font-weight:700;font-size:0.9rem;color:#059669;box-shadow:0 3px 10px rgba(16,185,129,0.18);border:2px solid #a7f3d0; }
+
+  .instruction { text-align:center;font-size:0.9rem;color:#6b7280;font-weight:700;padding:0 16px 8px;position:relative;z-index:10; }
+
+  .game-area { position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 12px 24px; }
+
+  /* grid */
+  .grid-wrapper { background:white;border-radius:20px;padding:12px;box-shadow:0 6px 24px rgba(0,0,0,0.10);border:3px solid #a7f3d0;touch-action:none; }
+  #letterGrid { display:grid;gap:3px; }
+
+  .cell {
+    width:var(--cell);height:var(--cell);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Chewy',cursive;font-size:clamp(0.95rem,3vw,1.25rem);
+    color:#064e3b;border-radius:8px;background:#f0fdf4;
+    border:1.5px solid #d1fae5;
+    transition:background 0.08s,transform 0.08s;
+    position:relative;
+  }
+  .cell.hover   { background:#fef9c3;color:#78350f;border-color:#fbbf24;transform:scale(1.1); }
+  .cell.found-0 { background:#bfdbfe;color:#1e3a8a;border-color:#60a5fa; }
+  .cell.found-1 { background:#fde68a;color:#92400e;border-color:#f59e0b; }
+  .cell.found-2 { background:#fbcfe8;color:#9d174d;border-color:#f472b6; }
+  .cell.found-3 { background:#d9f99d;color:#365314;border-color:#84cc16; }
+  .cell.found-4 { background:#ddd6fe;color:#4c1d95;border-color:#a78bfa; }
+  .cell.found-5 { background:#fca5a5;color:#7f1d1d;border-color:#ef4444; }
+  .cell.found-6 { background:#a5f3fc;color:#164e63;border-color:#22d3ee; }
+  .cell.found-7 { background:#fed7aa;color:#7c2d12;border-color:#fb923c; }
+
+  /* word list */
+  .words-section { width:100%;max-width:520px;background:white;border-radius:20px;padding:16px 18px;box-shadow:0 6px 24px rgba(0,0,0,0.08);border:3px solid #fde68a; }
+  .words-title { font-family:'Chewy',cursive;font-size:1.2rem;color:#f59e0b;text-align:center;margin-bottom:12px;letter-spacing:1px; }
+  #wordList { display:flex;flex-wrap:wrap;gap:8px;justify-content:center; }
+  .word-chip { background:#fef3c7;border:2.5px solid #fde68a;border-radius:50px;padding:6px 16px;font-family:'Chewy',cursive;font-size:clamp(0.9rem,3vw,1.1rem);color:#92400e;letter-spacing:1px;transition:all 0.3s; }
+  .word-chip.found { background:#d1fae5;border-color:#6ee7b7;color:#065f46;text-decoration:line-through;opacity:0.7; }
+
+  /* win overlay */
+  .win-overlay { display:none;position:fixed;inset:0;z-index:200;background:rgba(240,253,244,0.95);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px; }
+  .win-overlay.show { display:flex; }
+  .win-icon { font-size:5rem;animation:wobble 0.8s ease infinite alternate; }
+  @keyframes wobble { from{transform:rotate(-8deg)} to{transform:rotate(8deg)} }
+  .win-overlay h2 { font-family:'Chewy',cursive;font-size:clamp(2rem,6vw,3.2rem);color:#059669;margin:14px 0 8px;letter-spacing:2px; }
+  .win-overlay p { font-size:1.1rem;color:#065f46;font-weight:700;margin:4px 0; }
+  .win-btn { margin-top:16px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:50px;padding:13px 36px;font-family:'Chewy',cursive;font-size:1.1rem;cursor:pointer;letter-spacing:1px;box-shadow:0 6px 18px rgba(16,185,129,0.45); }
+  .cf-wrap { position:absolute;inset:0;pointer-events:none;overflow:hidden; }
+  .cf { position:absolute;font-size:1.6rem;animation:cfDrop linear forwards; }
+  @keyframes cfDrop { from{transform:translateY(-50px)rotate(0deg);opacity:1} to{transform:translateY(110vh)rotate(720deg);opacity:0} }
+</style>
+</head>
+<body>
+<div class="bg-deco" id="bgDeco"></div>
+
+<div class="win-overlay" id="winOverlay">
+  <div class="cf-wrap" id="cfWrap"></div>
+  <div class="win-icon">🏅</div>
+  <h2>All Words Found!</h2>
+  <p id="winFoundMsg"></p>
+  <p id="winTimeMsg"></p>
+  <button class="win-btn" onclick="newGame()">🔤 New Puzzle!</button>
+  <a href="index.html" style="margin-top:10px;display:inline-block;color:#059669;font-weight:900;font-size:1rem;text-decoration:none;">🏠 Home</a>
+</div>
+
+<header>
+  <a href="index.html" class="home-btn">🏠 Home</a>
+  <h1>🔤 Word Hunt!</h1>
+  <div class="hsp"></div>
+</header>
+
+<div class="controls-row">
+  <button class="level-btn active" onclick="setLevel('easy',this)">🌱 Easy</button>
+  <button class="level-btn" onclick="setLevel('medium',this)">🌟 Medium</button>
+  <button class="level-btn" onclick="setLevel('hard',this)">🔥 Hard</button>
+  <button class="new-btn" onclick="newGame()">🎲 New Puzzle!</button>
+</div>
+
+<div class="stats-row">
+  <div class="stat-chip">✅ Found: <span id="foundCount">0</span>/<span id="totalWords">0</span></div>
+  <div class="stat-chip">⏱️ <span id="timerDisp">0:00</span></div>
+</div>
+
+<p class="instruction">👆 Slide your finger over the letters to find a word!</p>
+
+<div class="game-area">
+  <div class="grid-wrapper" id="gridWrapper">
+    <div id="letterGrid"></div>
+  </div>
+  <div class="words-section">
+    <div class="words-title">🔍 Find These Words!</div>
+    <div id="wordList"></div>
+  </div>
+</div>
+
+<script>
+const WORD_BANKS = {
+  easy:[
+    ['CAT','DOG','SUN','BEE','ANT','HEN'],
+    ['RED','BIG','RUN','FUN','HOT','CUP'],
+    ['BUS','HAT','MAN','PEN','BED','CAP'],
+  ],
+  medium:[
+    ['APPLE','BRAVE','CLOUD','DANCE','FROG','GRAPE'],
+    ['CANDY','DREAM','EAGLE','FAIRY','KITE','LEMON'],
+    ['MAGIC','NIGHT','OCEAN','PIANO','RIVER','TIGER'],
+  ],
+  hard:[
+    ['BANANA','CASTLE','DONKEY','FOREST','GARDEN','HELMET'],
+    ['LANTERN','MIRROR','NOODLE','ORANGE','PALACE','RABBIT'],
+    ['VOLCANO','WHISPER','YELLOW','ANCHOR','BRIDGE','CRAYON'],
+  ]
+};
+const GRID_SIZES={easy:8,medium:10,hard:12};
+
+let level='easy', gridSize=8, grid=[], words=[], foundWords=[], foundColorMap={};
+let timerInterval=null, seconds=0;
+
+// slide state
+let isDragging=false, dragCells=[], lastCell=null;
+
+// BG deco
+const bgDeco=document.getElementById('bgDeco');
+'✏️📝🔤📚✂️🖍️'.split('').filter(e=>e.trim()).forEach(e=>{
+  for(let i=0;i<3;i++){const d=document.createElement('div');d.className='deco-item';d.textContent=e;d.style.left=Math.random()*100+'%';d.style.animationDuration=(12+Math.random()*16)+'s';d.style.animationDelay=(Math.random()*20)+'s';bgDeco.appendChild(d);}
+});
+
+function setLevel(l,btn){level=l;gridSize=GRID_SIZES[l];document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');newGame();}
+
+function startTimer(){clearInterval(timerInterval);seconds=0;timerInterval=setInterval(()=>{seconds++;const m=Math.floor(seconds/60),s=seconds%60;document.getElementById('timerDisp').textContent=`${m}:${s.toString().padStart(2,'0')}`;},1000);}
+
+function newGame(){
+  document.getElementById('winOverlay').classList.remove('show');
+  foundWords=[];foundColorMap={};isDragging=false;dragCells=[];lastCell=null;
+  document.getElementById('foundCount').textContent='0';
+  document.getElementById('timerDisp').textContent='0:00';
+
+  const bank=WORD_BANKS[level];
+  const chosen=bank[Math.floor(Math.random()*bank.length)];
+  words=chosen.slice(0,level==='easy'?6:level==='medium'?6:6);
+  document.getElementById('totalWords').textContent=words.length;
+
+  grid=Array.from({length:gridSize},()=>Array(gridSize).fill(''));
+
+  const directions=[[0,1],[1,0],[1,1],[-1,1]];
+  const easyDirs=[[0,1],[1,0]];
+  const useDirs=level==='easy'?easyDirs:directions;
+  const wordPlacements={};
+
+  words.forEach(word=>{
+    let placed=false,attempts=0;
+    while(!placed&&attempts<300){
+      attempts++;
+      const dir=useDirs[Math.floor(Math.random()*useDirs.length)];
+      const[dr,dc]=dir;
+      const sr=Math.floor(Math.random()*gridSize),sc=Math.floor(Math.random()*gridSize);
+      const er=sr+dr*(word.length-1),ec=sc+dc*(word.length-1);
+      if(er<0||er>=gridSize||ec<0||ec>=gridSize)continue;
+      let ok=true;
+      for(let i=0;i<word.length;i++){const r=sr+dr*i,c=sc+dc*i;if(grid[r][c]!==''&&grid[r][c]!==word[i]){ok=false;break;}}
+      if(ok){
+        const cells=[];
+        for(let i=0;i<word.length;i++){const r=sr+dr*i,c=sc+dc*i;grid[r][c]=word[i];cells.push([r,c]);}
+        wordPlacements[word]=cells;placed=true;
+      }
+    }
+  });
+
+  const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let r=0;r<gridSize;r++)for(let c=0;c<gridSize;c++)if(grid[r][c]==='')grid[r][c]=letters[Math.floor(Math.random()*26)];
+
+  window._wordPlacements=wordPlacements;
+  renderGrid();
+  renderWordList();
+  startTimer();
+}
+
+function renderGrid(){
+  const container=document.getElementById('letterGrid');
+  container.style.gridTemplateColumns=`repeat(${gridSize},var(--cell))`;
+  container.innerHTML='';
+  for(let r=0;r<gridSize;r++)for(let c=0;c<gridSize;c++){
+    const cell=document.createElement('div');
+    cell.className='cell';
+    cell.textContent=grid[r][c];
+    cell.dataset.r=r;cell.dataset.c=c;
+    container.appendChild(cell);
+  }
+  applyFoundColors();
+  setupGridTouch();
+}
+
+function getCell(r,c){return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);}
+
+// =============================================
+// SLIDE / SWIPE SELECTION — touch & mouse
+// =============================================
+function setupGridTouch(){
+  const wrapper=document.getElementById('gridWrapper');
+
+  // Touch events
+  wrapper.addEventListener('touchstart',onTouchStart,{passive:false});
+  wrapper.addEventListener('touchmove', onTouchMove, {passive:false});
+  wrapper.addEventListener('touchend',  onTouchEnd,  {passive:false});
+
+  // Mouse events (for desktop testing)
+  wrapper.addEventListener('mousedown', onMouseStart);
+  wrapper.addEventListener('mousemove', onMouseMove);
+  wrapper.addEventListener('mouseup',   onMouseEnd);
+  wrapper.addEventListener('mouseleave',onMouseEnd);
+}
+
+function cellFromPoint(x,y){
+  // Use elementFromPoint to find which cell is under the finger/cursor
+  const el=document.elementFromPoint(x,y);
+  if(el&&el.classList.contains('cell'))return el;
+  return null;
+}
+
+function onTouchStart(e){
+  e.preventDefault();
+  const t=e.touches[0];
+  const cell=cellFromPoint(t.clientX,t.clientY);
+  if(!cell)return;
+  isDragging=true;dragCells=[];lastCell=null;
+  enterCell(cell);
+}
+function onTouchMove(e){
+  e.preventDefault();
+  if(!isDragging)return;
+  const t=e.touches[0];
+  const cell=cellFromPoint(t.clientX,t.clientY);
+  if(cell&&cell!==lastCell)enterCell(cell);
+}
+function onTouchEnd(e){
+  e.preventDefault();
+  if(isDragging)finishSelection();
+  isDragging=false;
+}
+
+function onMouseStart(e){
+  const cell=cellFromPoint(e.clientX,e.clientY);
+  if(!cell)return;
+  isDragging=true;dragCells=[];lastCell=null;
+  enterCell(cell);
+}
+function onMouseMove(e){
+  if(!isDragging)return;
+  const cell=cellFromPoint(e.clientX,e.clientY);
+  if(cell&&cell!==lastCell)enterCell(cell);
+}
+function onMouseEnd(){
+  if(isDragging)finishSelection();
+  isDragging=false;
+}
+
+function enterCell(cell){
+  // Only allow straight lines — check direction is consistent
+  const r=parseInt(cell.dataset.r),c=parseInt(cell.dataset.c);
+  if(dragCells.length===0){
+    dragCells.push(cell);lastCell=cell;
+    cell.classList.add('hover');
+    return;
+  }
+  if(dragCells.length===1){
+    // Any direction from first cell is fine
+    dragCells.push(cell);lastCell=cell;
+    cell.classList.add('hover');
+    return;
+  }
+  // Check that new cell is consistent with established direction
+  const r0=parseInt(dragCells[0].dataset.r),c0=parseInt(dragCells[0].dataset.c);
+  const r1=parseInt(dragCells[1].dataset.r),c1=parseInt(dragCells[1].dataset.c);
+  const dr=r1-r0,dc=c1-c0;
+  const expectedR=r0+dr*dragCells.length,expectedC=c0+dc*dragCells.length;
+  if(r===expectedR&&c===expectedC){
+    dragCells.push(cell);lastCell=cell;
+    cell.classList.add('hover');
+  }
+  // Allow backtracking (shrink selection)
+  else if(dragCells.length>1){
+    const prevR=parseInt(dragCells[dragCells.length-2].dataset.r);
+    const prevC=parseInt(dragCells[dragCells.length-2].dataset.c);
+    if(r===prevR&&c===prevC){
+      const removed=dragCells.pop();
+      removed.classList.remove('hover');
+      lastCell=dragCells[dragCells.length-1];
+    }
+  }
+}
+
+function clearHover(){dragCells.forEach(c=>c.classList.remove('hover'));}
+
+function finishSelection(){
+  if(dragCells.length<2){clearHover();dragCells=[];return;}
+  const word=dragCells.map(c=>grid[parseInt(c.dataset.r)][parseInt(c.dataset.c)]).join('');
+  const wordRev=word.split('').reverse().join('');
+  const matched=words.find(w=>w===word||w===wordRev);
+
+  if(matched&&!foundWords.includes(matched)){
+    foundWords.push(matched);
+    const colorIdx=foundWords.length-1;
+    foundColorMap[matched]=colorIdx;
+    dragCells.forEach(c=>{c.classList.remove('hover');c.classList.add(`found-${colorIdx%8}`);});
+    markWordFound(matched);
+    document.getElementById('foundCount').textContent=foundWords.length;
+    if(foundWords.length===words.length){clearInterval(timerInterval);setTimeout(showWin,600);}
+  } else {
+    // flash red then clear
+    dragCells.forEach(c=>{c.classList.remove('hover');c.style.background='#fee2e2';});
+    setTimeout(()=>{dragCells.forEach(c=>{c.style.background='';applyFoundColors();});},400);
+  }
+  dragCells=[];lastCell=null;
+}
+
+function applyFoundColors(){
+  if(!window._wordPlacements)return;
+  Object.entries(window._wordPlacements).forEach(([word,cells])=>{
+    if(foundWords.includes(word)){
+      const ci=foundColorMap[word];
+      cells.forEach(([r,c])=>{const el=getCell(r,c);if(el)el.classList.add(`found-${ci%8}`);});
+    }
+  });
+}
+
+function renderWordList(){
+  const list=document.getElementById('wordList');list.innerHTML='';
+  words.forEach(w=>{
+    const chip=document.createElement('div');chip.className='word-chip';chip.id=`chip-${w}`;chip.textContent=w;list.appendChild(chip);
+  });
+}
+
+function markWordFound(word){
+  const chip=document.getElementById(`chip-${word}`);
+  if(chip){chip.classList.add('found');chip.style.transform='scale(1.15)';setTimeout(()=>{chip.style.transform='';},300);}
+}
+
+function showWin(){
+  const m=Math.floor(seconds/60),s=seconds%60;
+  document.getElementById('winFoundMsg').textContent=`You found all ${words.length} words! 🎉`;
+  document.getElementById('winTimeMsg').textContent=`Time: ${m}:${s.toString().padStart(2,'0')} ⏱️ Amazing!`;
+  const cf=document.getElementById('cfWrap');cf.innerHTML='';
+  '🎉🔤📚✨🌟💖🎊⭐🏅✏️'.split('').forEach(e=>{
+    const el=document.createElement('div');el.className='cf';el.textContent=e;
+    el.style.left=Math.random()*100+'%';el.style.animationDuration=(2+Math.random()*3)+'s';el.style.animationDelay=(Math.random()*2)+'s';
+    cf.appendChild(el);
+  });
+  document.getElementById('winOverlay').classList.add('show');
+}
+
+window.addEventListener('load',newGame);
+</script>
+</body>
+</html>

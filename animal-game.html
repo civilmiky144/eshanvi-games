@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🦁 Animal Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:"Nunito",sans-serif;}
+body{background:linear-gradient(160deg,#fef9c3 0%,#dcfce7 50%,#e0f7fa 100%);display:flex;flex-direction:column;}
+
+/* HEADER */
+header{flex-shrink:0;background:linear-gradient(90deg,#eab308,#f97316);padding:clamp(7px,1.5vw,12px) clamp(12px,2vw,20px);display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(234,179,8,.45);}
+.home-btn{background:rgba(255,255,255,.22);color:white;border:2px solid rgba(255,255,255,.5);border-radius:50px;padding:6px 14px;font-weight:900;font-size:.85rem;text-decoration:none;display:inline-block;}
+header h1{font-family:"Baloo 2",cursive;font-size:clamp(1rem,3.5vw,1.8rem);color:white;text-shadow:2px 2px 0 rgba(0,0,0,.15);flex:1;text-align:center;}
+
+/* SCORE */
+.score-bar{flex-shrink:0;display:flex;justify-content:center;gap:8px;padding:6px 12px;flex-wrap:wrap;}
+.chip{background:white;border-radius:50px;padding:5px 14px;font-weight:900;font-size:.85rem;color:#854d0e;box-shadow:0 3px 8px rgba(234,179,8,.25);border:2px solid #fde68a;transition:transform .15s;}
+.chip.pop{animation:pop .3s ease;}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.32)}}
+
+/* BODY — fills remaining height */
+.game-body{flex:1;display:flex;flex-direction:column;padding:clamp(5px,1vw,10px) clamp(8px,1.5vw,14px);gap:clamp(6px,1.2vw,10px);overflow:hidden;}
+
+/* ANIMAL STAGE */
+.stage{
+  flex-shrink:0;background:white;border-radius:clamp(14px,2.5vw,22px);
+  padding:clamp(10px,2vw,16px);border:3px solid #fde68a;
+  box-shadow:0 5px 18px rgba(0,0,0,.09);
+  display:flex;align-items:center;gap:clamp(12px,2.5vw,20px);
+}
+.emoji-wrap{
+  flex-shrink:0;
+  width:clamp(80px,16vw,130px);height:clamp(80px,16vw,130px);
+  border-radius:50%;background:linear-gradient(135deg,#fef9c3,#dcfce7);
+  border:4px solid #fde68a;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(44px,10vw,82px);
+  box-shadow:0 4px 18px rgba(0,0,0,.1);
+  animation:animalBob 2.5s ease-in-out infinite;
+}
+@keyframes animalBob{0%,100%{transform:scale(1)rotate(-3deg)}50%{transform:scale(1.07)rotate(3deg)}}
+
+.stage-info{flex:1;display:flex;flex-direction:column;gap:6px;}
+.habitat-pill{display:inline-block;background:linear-gradient(135deg,#22c55e,#15803d);color:white;border-radius:50px;padding:4px 14px;font-size:clamp(.68rem,1.8vw,.82rem);font-weight:900;}
+.sound-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#fef9c3;border:2px solid #fde68a;border-radius:50px;
+  padding:7px 16px;font-size:clamp(.78rem,2vw,.92rem);font-weight:900;color:#92400e;
+  cursor:pointer;width:fit-content;transition:transform .15s;
+}
+.sound-btn:active{transform:scale(.92);}
+.fact-box{
+  background:linear-gradient(135deg,#dbeafe,#ede9fe);border-radius:12px;
+  padding:8px 12px;border:2px solid #a5b4fc;
+  font-size:clamp(.68rem,1.8vw,.8rem);font-weight:700;color:#312e81;line-height:1.5;
+}
+
+/* QUESTION */
+.q-box{
+  flex-shrink:0;background:white;border-radius:clamp(12px,2vw,18px);
+  padding:clamp(7px,1.5vw,12px) clamp(12px,2vw,16px);border:3px solid #a7f3d0;
+  box-shadow:0 3px 12px rgba(0,0,0,.07);text-align:center;
+}
+.q-lbl{font-size:clamp(.68rem,1.8vw,.8rem);font-weight:900;color:#065f46;margin-bottom:2px;}
+.q-text{font-family:"Baloo 2",cursive;font-size:clamp(.9rem,2.5vw,1.25rem);color:#1f2937;}
+
+/* CHOICES */
+.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(7px,1.5vw,12px);flex-shrink:0;}
+.choice{
+  background:white;border:3px solid #fde68a;border-radius:clamp(12px,2vw,18px);
+  padding:clamp(8px,1.8vw,14px) clamp(6px,1vw,10px);
+  font-family:"Baloo 2",cursive;font-size:clamp(.82rem,2.5vw,1.1rem);
+  color:#78350f;cursor:pointer;text-align:center;
+  box-shadow:0 3px 8px rgba(0,0,0,.06);transition:all .18s;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.choice .ce{font-size:clamp(1.3rem,4.5vw,2rem);}
+.choice:active{transform:scale(.93);}
+.choice.correct{background:#dcfce7;border-color:#22c55e;animation:cBounce .5s ease;}
+.choice.wrong{background:#fee2e2;border-color:#ef4444;animation:cShake .4s ease;}
+.choice.reveal{background:#dcfce7;border-color:#22c55e;}
+@keyframes cBounce{0%,100%{transform:scale(1)}40%{transform:scale(1.1)}}
+@keyframes cShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+/* FEEDBACK */
+.fb-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px;}
+.fb-overlay.show{display:flex;}
+.fb-card{background:white;border-radius:22px;padding:22px 18px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .28s ease;}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.fb-icon{font-size:3.6rem;display:block;margin-bottom:6px;}
+.fb-card h3{font-family:"Baloo 2",cursive;font-size:1.45rem;margin-bottom:5px;}
+.fb-card p{font-size:.85rem;font-weight:700;color:#6b7280;line-height:1.5;}
+.fb-btn{margin-top:12px;background:linear-gradient(135deg,#eab308,#f97316);color:white;border:none;border-radius:50px;padding:10px 26px;font-family:"Baloo 2",cursive;font-size:.95rem;cursor:pointer;}
+
+/* WIN */
+.win-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(255,252,235,.96);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+.win-overlay.show{display:flex;}
+.win-trophy{font-size:clamp(3.5rem,8vw,5.5rem);animation:tBounce 1s ease infinite alternate;}
+@keyframes tBounce{from{transform:rotate(-8deg)scale(1)}to{transform:rotate(8deg)scale(1.14)}}
+.win-overlay h2{font-family:"Baloo 2",cursive;font-size:clamp(1.8rem,6vw,3rem);color:#f97316;margin:10px 0 5px;}
+.win-overlay p{font-size:clamp(.85rem,2.2vw,1rem);color:#78350f;font-weight:700;margin:3px 0;}
+.win-stat{display:inline-block;background:white;border-radius:50px;padding:6px 16px;font-weight:900;color:#c2410c;border:2px solid #fed7aa;margin:4px;}
+.win-btn{margin-top:12px;background:linear-gradient(135deg,#eab308,#f97316);color:white;border:none;border-radius:50px;padding:12px 30px;font-family:"Baloo 2",cursive;font-size:1rem;cursor:pointer;}
+.cf{position:absolute;font-size:1.5rem;animation:cfFall linear forwards;pointer-events:none;}
+@keyframes cfFall{from{transform:translateY(-50px)rotate(0deg);opacity:1}to{transform:translateY(110vh)rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="win-overlay" id="win">
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none" id="cfWrap"></div>
+  <div class="win-trophy">🏆</div>
+  <h2>Animal Expert! 🦁</h2>
+  <p>You finished all the questions!</p>
+  <div>
+    <span class="win-stat" id="winScore"></span>
+    <span class="win-stat" id="winStreak"></span>
+  </div>
+  <button class="win-btn" onclick="startGame()">🔄 Play Again!</button>
+  <a href="index.html" style="margin-top:10px;display:inline-block;color:#f97316;font-weight:900;font-size:1rem;text-decoration:none;">🏠 Home</a>
+</div>
+
+<div class="fb-overlay" id="fb">
+  <div class="fb-card">
+    <span class="fb-icon" id="fbIcon"></span>
+    <h3 id="fbTitle"></h3>
+    <p id="fbMsg"></p>
+    <button class="fb-btn" onclick="closeFb()">Next ➡️</button>
+  </div>
+</div>
+
+<header>
+  <a href="index.html" class="home-btn">🏠 Home</a>
+  <h1>🦁 Animal Explorer</h1>
+  <div style="width:80px"></div>
+</header>
+
+<div class="score-bar">
+  <div class="chip" id="scoreChip">⭐ <span id="scoreVal">0</span></div>
+  <div class="chip" id="streakChip">🔥 <span id="streakVal">0</span></div>
+  <div class="chip">Q <span id="qNum">1</span> / 12</div>
+</div>
+
+<div class="game-body">
+  <div class="stage">
+    <div class="emoji-wrap" id="animalEmoji">🦁</div>
+    <div class="stage-info">
+      <div class="habitat-pill" id="habitatPill">🌾 Savanna</div>
+      <div class="sound-btn" id="soundBtn" onclick="playSound()">🔊 Hear its sound!</div>
+      <div class="fact-box" id="factBox">Did you know? Facts will appear here!</div>
+    </div>
+  </div>
+
+  <div class="q-box">
+    <div class="q-lbl" id="qLbl">👆 What animal is this?</div>
+    <div class="q-text" id="qText">Tap the correct answer!</div>
+  </div>
+
+  <div class="choices" id="choiceGrid"></div>
+</div>
+
+<script>
+const ANIMALS=[
+  {e:"🦁",n:"Lion",       h:"🌾 Savanna",    s:"Roarrr!",     fact:"Lions live in groups called a pride. Only male lions grow a big fluffy mane!"},
+  {e:"🐘",n:"Elephant",   h:"🌿 Grassland",  s:"Trumpet!",    fact:"Elephants never forget! They have an amazing memory. Their nose is called a trunk."},
+  {e:"🦒",n:"Giraffe",    h:"🌾 Savanna",    s:"Hmmm...",     fact:"Giraffes are the tallest animals on Earth! Their long neck helps them eat leaves from tall trees."},
+  {e:"🐯",n:"Tiger",      h:"🌿 Jungle",     s:"Grrr!",       fact:"Every tiger has unique stripes — just like your fingerprints! Tigers love to swim."},
+  {e:"🐧",n:"Penguin",    h:"❄️ Arctic",     s:"Squawk!",     fact:"Penguins cannot fly but are amazing swimmers! They live in very cold icy places."},
+  {e:"🦜",n:"Parrot",     h:"🌴 Rainforest", s:"Hello!",      fact:"Parrots can copy words they hear! Some parrots can learn hundreds of words."},
+  {e:"🦋",n:"Butterfly",  h:"🌸 Garden",     s:"Flutter!",    fact:"Butterflies taste with their feet! They start life as a caterpillar inside a cocoon."},
+  {e:"🐬",n:"Dolphin",    h:"🌊 Ocean",      s:"Eee-eee!",   fact:"Dolphins talk to each other using clicks and whistles. They are one of the smartest animals!"},
+  {e:"🦊",n:"Fox",        h:"🌲 Forest",     s:"Yip-yip!",   fact:"Foxes can hear animals underground! They use their big ears to find mice under snow."},
+  {e:"🐼",n:"Panda",      h:"🎋 Bamboo",     s:"Squeak!",    fact:"Giant pandas eat bamboo for up to 16 hours a day! They have a special thumb to hold it."},
+  {e:"🦩",n:"Flamingo",   h:"🏞️ Wetlands",  s:"Honk!",      fact:"Flamingos are pink because of the shrimp they eat! They stand on one leg to stay warm."},
+  {e:"🐙",n:"Octopus",    h:"🌊 Ocean",      s:"Blub!",      fact:"Octopuses have 3 hearts and blue blood! They can change colour to hide from enemies."},
+  {e:"🦓",n:"Zebra",      h:"🌾 Savanna",    s:"Whinny!",    fact:"Every zebra has different stripes — like a fingerprint! Stripes confuse hungry predators."},
+  {e:"🐸",n:"Frog",       h:"🌿 Pond",       s:"Ribbit!",    fact:"Frogs breathe through their skin! They start life as tiny tadpoles in the water."},
+  {e:"🦅",n:"Eagle",      h:"⛰️ Mountains",  s:"Screech!",   fact:"Eagles can see 8 times better than humans — they can spot a rabbit from 2 kilometres away!"},
+  {e:"🐨",n:"Koala",      h:"🌿 Australia",  s:"Grunt!",     fact:"Koalas sleep up to 22 hours a day! Eucalyptus leaves make them very sleepy."},
+  {e:"🦘",n:"Kangaroo",   h:"🌾 Australia",  s:"Thump!",     fact:"Kangaroos carry their babies (joeys) in a special pouch on their belly!"},
+  {e:"🐺",n:"Wolf",       h:"🌲 Forest",     s:"Howl!",      fact:"Wolves howl to talk to their pack from far away. A wolf pack is like a family."},
+  {e:"🦔",n:"Hedgehog",   h:"🌿 Garden",     s:"Snuffle!",   fact:"Hedgehogs have around 5,000 spines! They curl into a ball when they feel scared."},
+  {e:"🐠",n:"Clownfish",  h:"🌊 Coral Reef", s:"Blub!",      fact:"Clownfish live inside sea anemones for protection. Finding Nemo was a clownfish!"},
+];
+
+let score=0,streak=0,bestStreak=0,round=0,maxRounds=12;
+let queue=[],current=null,fbCb=null;
+
+function startGame(){
+  score=0;streak=0;bestStreak=0;round=0;
+  document.getElementById("win").classList.remove("show");
+  queue=[...ANIMALS].sort(()=>Math.random()-.5).slice(0,maxRounds);
+  nextQ();
+}
+
+function nextQ(){
+  round++;document.getElementById("qNum").textContent=round;
+  current=queue[round-1];
+  document.getElementById("animalEmoji").textContent=current.e;
+  document.getElementById("habitatPill").textContent=current.h;
+  document.getElementById("soundBtn").textContent="🔊 "+current.s;
+  document.getElementById("factBox").textContent="🌟 "+current.fact;
+
+  // Alternate question types
+  if(round%4===0){
+    // Habitat question
+    document.getElementById("qLbl").textContent="🏡 Where does this animal live?";
+    document.getElementById("qText").textContent="Find its home!";
+    buildHabitatQ();
+  } else if(round%4===2){
+    // Sound question
+    document.getElementById("qLbl").textContent="🔊 What sound does this animal make?";
+    document.getElementById("qText").textContent="Choose the right sound!";
+    buildSoundQ();
+  } else {
+    // Name question
+    document.getElementById("qLbl").textContent="👆 What animal is this?";
+    document.getElementById("qText").textContent="Tap the correct name!";
+    buildNameQ();
+  }
+}
+
+function buildNameQ(){
+  const wrongs=ANIMALS.filter(a=>a.n!==current.n).sort(()=>Math.random()-.5).slice(0,3);
+  const opts=[current,...wrongs].sort(()=>Math.random()-.5);
+  const grid=document.getElementById("choiceGrid");grid.innerHTML="";
+  opts.forEach(c=>{
+    const btn=document.createElement("div");btn.className="choice";
+    btn.innerHTML='<span class="ce">'+c.e+'</span><span>'+c.n+'</span>';
+    btn.onclick=()=>checkAns(c.n===current.n,btn,current.n,grid,current.n);
+    grid.appendChild(btn);
+  });
+}
+
+function buildHabitatQ(){
+  const habitats=[...new Set(ANIMALS.map(a=>a.h))];
+  const correct=current.h;
+  const wrongs=habitats.filter(h=>h!==correct).sort(()=>Math.random()-.5).slice(0,3);
+  const opts=[correct,...wrongs].sort(()=>Math.random()-.5);
+  const grid=document.getElementById("choiceGrid");grid.innerHTML="";
+  opts.forEach(h=>{
+    const parts=h.split(" ");const icon=parts[0];const label=parts.slice(1).join(" ");
+    const btn=document.createElement("div");btn.className="choice";
+    btn.innerHTML='<span class="ce">'+icon+'</span><span>'+label+'</span>';
+    btn.onclick=()=>checkAns(h===correct,btn,correct,grid,correct);
+    grid.appendChild(btn);
+  });
+}
+
+function buildSoundQ(){
+  const correct=current.s;
+  const wrongs=ANIMALS.filter(a=>a.n!==current.n).sort(()=>Math.random()-.5).slice(0,3).map(a=>a.s);
+  const opts=[correct,...wrongs].sort(()=>Math.random()-.5);
+  const grid=document.getElementById("choiceGrid");grid.innerHTML="";
+  opts.forEach(s=>{
+    const btn=document.createElement("div");btn.className="choice";
+    btn.style.fontSize="clamp(.85rem,2.5vw,1.1rem)";
+    btn.textContent=s;
+    btn.onclick=()=>checkAns(s===correct,btn,correct,grid,correct);
+    grid.appendChild(btn);
+  });
+}
+
+function checkAns(ok,btn,correctVal,grid,label){
+  document.querySelectorAll(".choice").forEach(b=>b.style.pointerEvents="none");
+  if(ok){
+    btn.classList.add("correct");
+    score+=10+streak*2;streak++;if(streak>bestStreak)bestStreak=streak;upUI();
+    const combo=streak>=3?" 🔥 "+streak+" in a row!":"";
+    setTimeout(()=>{
+      if(round>=maxRounds)showWin();
+      else showFb("🎉","Correct!",current.fact+combo,nextQ);
+    },500);
+  } else {
+    btn.classList.add("wrong");
+    document.querySelectorAll(".choice").forEach(b=>{if(b.textContent.includes(label)||b.innerHTML.includes(label))b.classList.add("reveal");});
+    streak=0;upUI();
+    setTimeout(()=>{
+      if(round>=maxRounds)showWin();
+      else showFb("🤔","Not quite!","It was: "+current.n+" "+current.e+"\n"+current.fact,nextQ);
+    },900);
+  }
+}
+
+function upUI(){
+  document.getElementById("scoreVal").textContent=score;
+  document.getElementById("streakVal").textContent=streak;
+  const sc=document.getElementById("scoreChip");sc.classList.remove("pop");void sc.offsetWidth;sc.classList.add("pop");
+}
+
+function playSound(){
+  const u=new SpeechSynthesisUtterance(current.n+" says: "+current.s);
+  u.pitch=1.4;u.rate=.9;
+  window.speechSynthesis.cancel();window.speechSynthesis.speak(u);
+}
+
+function showFb(icon,title,msg,cb){
+  document.getElementById("fbIcon").textContent=icon;
+  document.getElementById("fbTitle").textContent=title;
+  document.getElementById("fbMsg").textContent=msg;
+  document.getElementById("fb").classList.add("show");
+  fbCb=cb;
+}
+function closeFb(){document.getElementById("fb").classList.remove("show");if(fbCb){fbCb();fbCb=null;}}
+
+function showWin(){
+  document.getElementById("winScore").textContent="⭐ Score: "+score;
+  document.getElementById("winStreak").textContent="🔥 Best streak: "+bestStreak;
+  const cf=document.getElementById("cfWrap");cf.innerHTML="";
+  "🦁🐘🦒🐯🐬🦋🎉🌟✨🏅".split("").forEach(e=>{
+    const el=document.createElement("div");el.className="cf";el.textContent=e;
+    el.style.left=Math.random()*100+"%";el.style.animationDuration=(2+Math.random()*3)+"s";el.style.animationDelay=(Math.random()*2)+"s";
+    cf.appendChild(el);
+  });
+  document.getElementById("win").classList.add("show");
+}
+
+window.addEventListener("load",startGame);
+</script>
+</body>
+</html>
