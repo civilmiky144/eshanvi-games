@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🍭 Number Fun!</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:"Nunito",sans-serif;}
+body{background:linear-gradient(160deg,#fef9c3 0%,#fed7aa 50%,#fce7f3 100%);display:flex;flex-direction:column;}
+
+header{flex-shrink:0;background:linear-gradient(90deg,#f97316,#ec4899);padding:clamp(7px,1.5vw,13px) clamp(12px,2vw,20px);display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 18px rgba(249,115,22,.45);}
+.home-btn{background:rgba(255,255,255,.22);color:white;border:2px solid rgba(255,255,255,.5);border-radius:50px;padding:6px 14px;font-weight:900;font-size:.85rem;text-decoration:none;display:inline-block;}
+header h1{font-family:"Baloo 2",cursive;font-size:clamp(1rem,3.5vw,1.8rem);color:white;text-shadow:2px 2px 0 rgba(0,0,0,.15);flex:1;text-align:center;}
+
+.score-bar{flex-shrink:0;display:flex;justify-content:center;gap:8px;padding:clamp(4px,.8vw,8px) 12px;flex-wrap:wrap;}
+.chip{background:white;border-radius:50px;padding:5px 14px;font-weight:900;font-size:clamp(.78rem,2vw,.9rem);color:#c2410c;box-shadow:0 3px 8px rgba(249,115,22,.18);border:2px solid #fed7aa;}
+.chip.pop{animation:cpop .3s ease;}
+@keyframes cpop{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+
+.mode-tabs{flex-shrink:0;display:flex;gap:clamp(5px,1vw,8px);justify-content:center;padding:0 clamp(8px,1.5vw,12px) clamp(4px,.8vw,8px);}
+.mtab{flex:1;max-width:160px;background:white;border:3px solid #fdba74;border-radius:clamp(12px,2vw,18px);padding:clamp(5px,1.2vw,10px) 8px;cursor:pointer;text-align:center;font-family:"Baloo 2",cursive;font-size:clamp(.72rem,2vw,.9rem);color:#92400e;transition:all .2s;box-shadow:0 3px 8px rgba(0,0,0,.06);}
+.mtab.active{background:linear-gradient(135deg,#fed7aa,#fbbf24);border-color:#f59e0b;box-shadow:0 5px 16px rgba(245,158,11,.35);}
+.mtab .ti{font-size:clamp(1rem,3.5vw,1.5rem);display:block;margin-bottom:1px;}
+
+.game-area{flex:1;display:flex;flex-direction:column;padding:clamp(4px,.8vw,10px) clamp(8px,1.5vw,14px);gap:clamp(5px,1vw,10px);overflow:hidden;min-height:0;}
+
+/* ══ MODE 1: COUNT & TAP ══ */
+#modeTap{display:none;flex:1;flex-direction:column;gap:clamp(5px,1vw,8px);min-height:0;}
+.tap-instruction{flex-shrink:0;background:white;border-radius:clamp(12px,2vw,18px);padding:clamp(8px,1.5vw,12px) 16px;border:3px solid #fde68a;box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:center;}
+.tap-question{font-family:"Baloo 2",cursive;font-size:clamp(.9rem,3vw,1.4rem);color:#1f2937;}
+.tap-counter{display:inline-block;background:linear-gradient(135deg,#fbbf24,#f97316);color:white;border-radius:50px;padding:4px 18px;font-family:"Baloo 2",cursive;font-size:clamp(1.1rem,3.5vw,1.7rem);margin-top:4px;box-shadow:0 3px 10px rgba(249,115,22,.4);}
+.tap-counter.bump{animation:bump .2s ease;}
+@keyframes bump{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.tap-stage{flex:1;background:linear-gradient(160deg,#f0fdf4,#ecfdf5);border-radius:clamp(12px,2vw,18px);border:3px solid #a7f3d0;box-shadow:0 4px 14px rgba(0,0,0,.07);position:relative;overflow:hidden;min-height:0;}
+.tap-obj{position:absolute;cursor:pointer;line-height:1;animation:floatObj ease-in-out infinite alternate;-webkit-tap-highlight-color:transparent;}
+@keyframes floatObj{0%{transform:translateY(0)rotate(-5deg)}100%{transform:translateY(-10px)rotate(5deg)}}
+.tap-obj.tapped{opacity:.3;transform:scale(.6)!important;animation:none;pointer-events:none;transition:all .25s;}
+.tap-btns{flex-shrink:0;display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(6px,1.2vw,10px);}
+.tap-hint-btn{background:linear-gradient(135deg,#60a5fa,#3b82f6);color:white;border:none;border-radius:clamp(10px,2vw,16px);padding:clamp(10px,2.2vw,16px);font-family:"Baloo 2",cursive;font-size:clamp(.9rem,2.8vw,1.2rem);cursor:pointer;box-shadow:0 4px 14px rgba(96,165,250,.4);}
+.tap-check-btn{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:clamp(10px,2vw,16px);padding:clamp(10px,2.2vw,16px);font-family:"Baloo 2",cursive;font-size:clamp(.9rem,2.8vw,1.2rem);cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,.4);}
+
+/* ══ MODE 2: PICTURE ADDITION ══ */
+#modeAdd{display:none;flex:1;flex-direction:column;gap:clamp(5px,1vw,8px);min-height:0;}
+.add-visual{flex:1;background:white;border-radius:clamp(12px,2vw,18px);border:3px solid #fde68a;box-shadow:0 4px 14px rgba(0,0,0,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.2vw,10px);padding:clamp(8px,1.8vw,14px);min-height:0;}
+.add-row{display:flex;align-items:center;justify-content:center;gap:clamp(5px,1.2vw,12px);flex-wrap:wrap;}
+.add-group{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.add-emojis{font-size:clamp(1.4rem,5vw,2.6rem);line-height:1.3;text-align:center;letter-spacing:2px;}
+.add-label{font-family:"Baloo 2",cursive;font-size:clamp(.68rem,1.8vw,.85rem);color:#6b7280;background:#f9fafb;border-radius:50px;padding:3px 10px;}
+.add-op{font-family:"Baloo 2",cursive;font-size:clamp(1.8rem,5.5vw,2.8rem);color:#8b5cf6;font-weight:900;}
+.add-question{background:#f3e8ff;border-radius:clamp(10px,2vw,16px);padding:clamp(7px,1.8vw,12px) clamp(12px,2.5vw,20px);border:3px dashed #c084fc;}
+.add-q-text{font-family:"Baloo 2",cursive;font-size:clamp(1.3rem,4vw,2rem);color:#4c1d95;}
+.add-choices{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.2vw,10px);}
+.add-choice{background:white;border:3px solid #fde68a;border-radius:clamp(10px,2vw,16px);padding:clamp(10px,2.5vw,18px) 6px;font-family:"Baloo 2",cursive;font-size:clamp(1.3rem,4.5vw,2rem);color:#92400e;cursor:pointer;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.07);transition:all .18s;}
+.add-choice:active{transform:scale(.92);}
+.add-choice.correct{background:#dcfce7;border-color:#22c55e;animation:abounce .5s ease;}
+.add-choice.wrong{background:#fee2e2;border-color:#ef4444;animation:ashake .4s ease;}
+.add-choice.reveal{background:#dcfce7;border-color:#22c55e;}
+@keyframes abounce{0%,100%{transform:scale(1)}40%{transform:scale(1.15)}}
+@keyframes ashake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ══ MODE 3: NUMBER MATCH ══ */
+#modeMatch{display:none;flex:1;flex-direction:column;gap:clamp(5px,1vw,8px);min-height:0;}
+.match-top{flex-shrink:0;background:white;border-radius:clamp(12px,2vw,18px);padding:clamp(8px,1.5vw,12px) 16px;border:3px solid #c084fc;box-shadow:0 4px 14px rgba(0,0,0,.08);text-align:center;}
+.match-q-lbl{font-size:clamp(.68rem,1.8vw,.82rem);font-weight:900;color:#7c3aed;margin-bottom:3px;}
+.match-num{font-family:"Baloo 2",cursive;font-size:clamp(2.8rem,9vw,5rem);color:#4c1d95;line-height:1;}
+.match-word{font-family:"Baloo 2",cursive;font-size:clamp(.85rem,2.2vw,1.15rem);color:#8b5cf6;}
+.match-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(6px,1.2vw,10px);flex:1;min-height:0;}
+.match-card{background:white;border:3px solid #e9d5ff;border-radius:clamp(12px,2vw,18px);padding:clamp(7px,1.5vw,12px);cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:0 3px 10px rgba(0,0,0,.07);transition:all .18s;min-height:0;overflow:hidden;}
+.match-card:active{transform:scale(.93);}
+.match-card.correct{background:#dcfce7;border-color:#22c55e;animation:abounce .5s ease;}
+.match-card.wrong{background:#fee2e2;border-color:#ef4444;animation:ashake .4s ease;}
+.match-card.reveal{background:#dcfce7;border-color:#22c55e;}
+.match-emojis{font-size:clamp(1.2rem,4vw,2rem);line-height:1.3;word-break:break-all;}
+.match-count{font-family:"Baloo 2",cursive;font-size:clamp(.72rem,2vw,.9rem);color:#9ca3af;}
+
+/* ── OVERLAYS ── */
+.fb{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px;}
+.fb.show{display:flex;}
+.fb-card{background:white;border-radius:22px;padding:22px 18px;max-width:290px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .28s ease;}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.fb-icon{font-size:3.5rem;display:block;margin-bottom:6px;}
+.fb-card h3{font-family:"Baloo 2",cursive;font-size:1.4rem;margin-bottom:5px;}
+.fb-card p{font-size:.88rem;font-weight:700;color:#6b7280;line-height:1.5;}
+.fb-btn{margin-top:12px;background:linear-gradient(135deg,#f97316,#ec4899);color:white;border:none;border-radius:50px;padding:10px 26px;font-family:"Baloo 2",cursive;font-size:.95rem;cursor:pointer;}
+
+.win{display:none;position:fixed;inset:0;z-index:200;background:rgba(255,248,235,.97);backdrop-filter:blur(10px);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+.win.show{display:flex;}
+.win-trophy{font-size:clamp(3.5rem,8vw,5.5rem);animation:tBounce 1s ease infinite alternate;}
+@keyframes tBounce{from{transform:rotate(-8deg)scale(1)}to{transform:rotate(8deg)scale(1.14)}}
+.win h2{font-family:"Baloo 2",cursive;font-size:clamp(1.8rem,6vw,2.8rem);color:#f97316;margin:10px 0 5px;}
+.win-stat{display:inline-block;background:white;border-radius:50px;padding:6px 16px;font-weight:900;color:#c2410c;border:2px solid #fed7aa;margin:4px;}
+.win-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px;}
+.win-btn{background:linear-gradient(135deg,#f97316,#ec4899);color:white;border:none;border-radius:50px;padding:12px 24px;font-family:"Baloo 2",cursive;font-size:1rem;cursor:pointer;}
+.win-btn.sec{background:linear-gradient(135deg,#8b5cf6,#a855f7);}
+.cf{position:absolute;font-size:1.5rem;animation:cfFall linear forwards;pointer-events:none;}
+@keyframes cfFall{from{transform:translateY(-50px)rotate(0);opacity:1}to{transform:translateY(110vh)rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+<script>(function(){try{var e=document.documentElement;(e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e);}catch(e){}})();</script>
+
+<div class="win" id="win">
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none" id="cfWrap"></div>
+  <div class="win-trophy">🏆</div>
+  <h2 id="winTitle">Number Star! ⭐</h2>
+  <p>You answered all the questions!</p>
+  <div style="margin:8px 0"><span class="win-stat" id="winScore"></span><span class="win-stat" id="winStreak"></span></div>
+  <div class="win-btns">
+    <button class="win-btn" onclick="restartSame()">🔄 Play Again!</button>
+    <button class="win-btn sec" onclick="nextMode()">➡️ Next Game!</button>
+  </div>
+  <a href="index.html?hub=1" style="margin-top:12px;display:inline-block;color:#f97316;font-weight:900;font-size:1rem;text-decoration:none;">🏠 Games Menu</a>
+</div>
+
+<div class="fb" id="fb">
+  <div class="fb-card">
+    <span class="fb-icon" id="fbIcon"></span>
+    <h3 id="fbTitle"></h3>
+    <p id="fbMsg"></p>
+    <button class="fb-btn" onclick="closeFb()">Next ➡️</button>
+  </div>
+</div>
+
+<header>
+  <a href="index.html?hub=1" class="home-btn">🏠 Games</a>
+  <h1>🍭 Number Fun!</h1>
+  <div style="width:80px"></div>
+</header>
+
+<div class="score-bar">
+  <div class="chip" id="scoreChip">⭐ <span id="scoreVal">0</span></div>
+  <div class="chip" id="streakChip">🔥 <span id="streakVal">0</span></div>
+  <div class="chip">Q <span id="qNum">1</span> / <span id="qTotal">8</span></div>
+</div>
+
+<div class="mode-tabs">
+  <div class="mtab active" id="tabTap" onclick="switchMode('Tap')"><span class="ti">👆</span>Count &amp; Tap!</div>
+  <div class="mtab" id="tabAdd" onclick="switchMode('Add')"><span class="ti">🍎</span>Picture Sums!</div>
+  <div class="mtab" id="tabMatch" onclick="switchMode('Match')"><span class="ti">🔢</span>Number Match!</div>
+</div>
+
+<div class="game-area">
+
+  <!-- COUNT & TAP -->
+  <div id="modeTap">
+    <div class="tap-instruction">
+      <div class="tap-question" id="tapQ">Tap each 🍎 to count them!</div>
+      <div class="tap-counter" id="tapCounter">0</div>
+    </div>
+    <div class="tap-stage" id="tapStage"></div>
+    <div class="tap-btns">
+      <button class="tap-hint-btn" onclick="tapHint()">💡 Hint!</button>
+      <button class="tap-check-btn" onclick="tapCheck()">✅ That's my answer!</button>
+    </div>
+  </div>
+
+  <!-- PICTURE ADDITION -->
+  <div id="modeAdd">
+    <div class="add-visual" id="addVisual"></div>
+    <div class="add-choices" id="addChoices"></div>
+  </div>
+
+  <!-- NUMBER MATCH -->
+  <div id="modeMatch">
+    <div class="match-top">
+      <div class="match-q-lbl">🔢 Which group has this many?</div>
+      <div class="match-num" id="matchNum">5</div>
+      <div class="match-word" id="matchWord">five</div>
+    </div>
+    <div class="match-grid" id="matchGrid"></div>
+  </div>
+
+</div>
+
+<script>
+const WORDS=['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen'];
+const OBJS=[{e:'🍎',n:'apples'},{e:'🍊',n:'oranges'},{e:'🌟',n:'stars'},{e:'🐱',n:'cats'},{e:'🌸',n:'flowers'},{e:'🎈',n:'balloons'},{e:'🍭',n:'lollipops'},{e:'🐸',n:'frogs'},{e:'🦋',n:'butterflies'},{e:'🌙',n:'moons'},{e:'⭐',n:'stars'},{e:'🍩',n:'donuts'},{e:'🐶',n:'dogs'},{e:'🌺',n:'flowers'},{e:'🎀',n:'bows'},{e:'🐥',n:'chicks'},{e:'🍓',n:'strawberries'},{e:'🦊',n:'foxes'},{e:'🎵',n:'notes'},{e:'🌈',n:'rainbows'}];
+
+let score=0,streak=0,bestStreak=0,round=1,MAX=8,currentMode='Tap',fbCb=null;
+let tapTarget=0,tapCount=0,tapObj=null;
+
+function r(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+
+function upUI(){
+  document.getElementById('scoreVal').textContent=score;
+  document.getElementById('streakVal').textContent=streak;
+  document.getElementById('qNum').textContent=round;
+  const sc=document.getElementById('scoreChip');sc.classList.remove('pop');void sc.offsetWidth;sc.classList.add('pop');
+}
+
+function switchMode(m){
+  currentMode=m;
+  ['Tap','Add','Match'].forEach(id=>{
+    document.getElementById('mode'+id).style.display=id===m?'flex':'none';
+    document.getElementById('tab'+id).classList.toggle('active',id===m);
+  });
+  score=0;streak=0;bestStreak=0;round=1;
+  document.getElementById('qTotal').textContent=MAX;
+  upUI();
+  if(m==='Tap')startTap();
+  else if(m==='Add')startAdd();
+  else startMatch();
+}
+
+function nextMode(){document.getElementById('win').classList.remove('show');const modes=['Tap','Add','Match'];switchMode(modes[(modes.indexOf(currentMode)+1)%3]);}
+function restartSame(){document.getElementById('win').classList.remove('show');switchMode(currentMode);}
+
+function showFb(icon,title,msg,cb){
+  document.getElementById('fbIcon').textContent=icon;
+  document.getElementById('fbTitle').textContent=title;
+  document.getElementById('fbMsg').textContent=msg;
+  document.getElementById('fb').classList.add('show');
+  fbCb=cb||null;
+}
+function closeFb(){document.getElementById('fb').classList.remove('show');if(fbCb){const f=fbCb;fbCb=null;f();}}
+
+function afterQ(ok,pts,okMsg,failMsg,nextFn){
+  if(ok){
+    score+=pts;streak++;if(streak>bestStreak)bestStreak=streak;upUI();
+    const combo=streak>=3?' 🔥 '+streak+' in a row!':'';
+    showFb('🎉','Correct! 🌟',okMsg+combo+'\n+'+pts+' stars!',()=>{round++;if(round>MAX)showWin();else nextFn();});
+  } else {
+    streak=0;upUI();
+    showFb('💪','Good try!',failMsg+'\nDon\'t worry, keep going! 😊',()=>{round++;if(round>MAX)showWin();else nextFn();});
+  }
+}
+
+function showWin(){
+  document.getElementById('winTitle').textContent=score>=MAX*12*.9?'🌟 Number Genius!':score>=MAX*12*.6?'🎉 Amazing Job!':'💪 Great Effort!';
+  document.getElementById('winScore').textContent='⭐ Score: '+score;
+  document.getElementById('winStreak').textContent='🔥 Best streak: '+bestStreak;
+  const cf=document.getElementById('cfWrap');cf.innerHTML='';
+  '🍭🔢⭐🌟✨🎉💖🎊🏅🌈🍎🌸'.split('').forEach(e=>{
+    const el=document.createElement('div');el.className='cf';el.textContent=e;
+    el.style.left=Math.random()*100+'%';el.style.animationDuration=(2+Math.random()*3)+'s';el.style.animationDelay=Math.random()*1.5+'s';
+    cf.appendChild(el);
+  });
+  document.getElementById('win').classList.add('show');
+}
+
+/* ══ COUNT & TAP ══ */
+function startTap(){tapCount=0;buildTapStage();}
+function buildTapStage(){
+  tapCount=0;updateTapCounter();
+  const stage=document.getElementById('tapStage');stage.innerHTML='';
+  const maxN=Math.min(3+Math.floor(round/2)*2,12);
+  tapTarget=r(Math.max(1,Math.floor(round/3)),maxN);
+  tapObj=pick(OBJS);
+  document.getElementById('tapQ').textContent='Tap each '+tapObj.e+' and count how many '+tapObj.n+' there are!';
+  const sw=stage.clientWidth||280,sh=stage.clientHeight||140;
+  const sz=Math.min(Math.max(28,sw/tapTarget-6),58);
+  const placed=[];
+  for(let i=0;i<tapTarget;i++){
+    let x,y,ok=false,tries=0;
+    while(!ok&&tries<120){x=r(8,sw-sz-8);y=r(8,sh-sz-8);ok=placed.every(p=>Math.hypot(p.x-x,p.y-y)>sz*1.3);tries++;}
+    placed.push({x,y});
+    const el=document.createElement('div');el.className='tap-obj';
+    el.textContent=tapObj.e;el.style.fontSize=sz+'px';el.style.left=x+'px';el.style.top=y+'px';
+    el.style.animationDelay=Math.random()*2+'s';el.style.animationDuration=(2+Math.random()*1.5)+'s';
+    el.addEventListener('click',()=>tapOne(el));
+    el.addEventListener('touchstart',e=>{e.preventDefault();tapOne(el);},{passive:false});
+    stage.appendChild(el);
+  }
+}
+function tapOne(el){if(el.classList.contains('tapped'))return;el.classList.add('tapped');tapCount++;updateTapCounter();}
+function updateTapCounter(){const c=document.getElementById('tapCounter');c.textContent=tapCount;c.classList.remove('bump');void c.offsetWidth;c.classList.add('bump');}
+function tapCheck(){
+  afterQ(tapCount===tapTarget,12,
+    'There were '+tapTarget+' '+tapObj.e+'! Perfect counting! 🎉',
+    'There were '+tapTarget+' '+tapObj.e+'. Try tapping one by one next time!',
+    buildTapStage);
+}
+function tapHint(){document.querySelectorAll('.tap-obj:not(.tapped)').forEach(el=>{el.style.outline='4px solid gold';el.style.borderRadius='50%';setTimeout(()=>{el.style.outline='';},1200);});}
+
+/* ══ PICTURE ADDITION ══ */
+function startAdd(){buildAdd();}
+function buildAdd(){
+  const vis=document.getElementById('addVisual');const ch=document.getElementById('addChoices');
+  vis.innerHTML='';ch.innerHTML='';
+  const maxS=Math.min(4+Math.round(round*1.2),15);
+  const a=r(1,Math.floor(maxS/2));const b=r(1,maxS-a);const correct=a+b;
+  const obj=pick(OBJS);
+  vis.innerHTML=`
+    <div class="add-row">
+      <div class="add-group"><div class="add-emojis">${obj.e.repeat(a)}</div><div class="add-label">${a} ${obj.n}</div></div>
+      <div class="add-op">+</div>
+      <div class="add-group"><div class="add-emojis">${obj.e.repeat(b)}</div><div class="add-label">${b} ${obj.n}</div></div>
+      <div class="add-op">=</div>
+      <div class="add-question"><div class="add-q-text">${obj.e} ?</div></div>
+    </div>`;
+  const wrongs=buildWrongs(correct);
+  [correct,...wrongs].sort(()=>Math.random()-.5).forEach(val=>{
+    const btn=document.createElement('div');btn.className='add-choice';btn.textContent=val;
+    btn.onclick=()=>checkAdd(val===correct,val,correct,`${a} + ${b} = ${correct}`,btn);
+    ch.appendChild(btn);
+  });
+}
+function checkAdd(ok,chosen,correct,eq,btn){
+  document.querySelectorAll('.add-choice').forEach(b=>b.style.pointerEvents='none');
+  if(ok){btn.classList.add('correct');afterQ(true,10,eq+' — brilliant! 🎉','',buildAdd);}
+  else{btn.classList.add('wrong');document.querySelectorAll('.add-choice').forEach(b=>{if(parseInt(b.textContent)===correct)b.classList.add('reveal');});afterQ(false,0,'',`The answer was ${correct}. ${eq}`,buildAdd);}
+}
+function buildWrongs(c){const s=new Set();[c+1,c-1,c+2,c+3,c-2].forEach(v=>{if(v>0&&v!==c)s.add(v);});while(s.size<3){const v=r(1,c+4);if(v!==c)s.add(v);}return [...s].slice(0,3);}
+
+/* ══ NUMBER MATCH ══ */
+function startMatch(){buildMatch();}
+function buildMatch(){
+  const maxN=Math.min(3+Math.floor(round/1.5),10);
+  const target=r(1,maxN);
+  document.getElementById('matchNum').textContent=target;
+  document.getElementById('matchWord').textContent=WORDS[target]||'';
+  const grid=document.getElementById('matchGrid');grid.innerHTML='';
+  const counts=new Set([target]);
+  while(counts.size<4){const n=r(1,Math.min(maxN+2,12));counts.add(n);}
+  const usedE=new Set();
+  [...counts].sort(()=>Math.random()-.5).forEach(count=>{
+    let obj;do{obj=pick(OBJS);}while(usedE.has(obj.e));usedE.add(obj.e);
+    const card=document.createElement('div');card.className='match-card';
+    const rows=[];for(let i=0;i<count;i+=5)rows.push(obj.e.repeat(Math.min(5,count-i)));
+    card.innerHTML=`<div class="match-emojis">${rows.join('<br>')}</div><div class="match-count">${count} ${obj.n}</div>`;
+    card.onclick=()=>checkMatch(count===target,count,target,card);
+    grid.appendChild(card);
+  });
+}
+function checkMatch(ok,chosen,correct,card){
+  document.querySelectorAll('.match-card').forEach(c=>c.style.pointerEvents='none');
+  if(ok){card.classList.add('correct');afterQ(true,10,`Yes! That group had ${correct}! 🎉`,'',buildMatch);}
+  else{card.classList.add('wrong');document.querySelectorAll('.match-card').forEach(c=>{if(parseInt(c.querySelector('.match-count').textContent)===correct)c.classList.add('reveal');});afterQ(false,0,'',`The group with ${correct} was right! Look carefully next time.`,buildMatch);}
+}
+
+window.addEventListener('load',()=>switchMode('Tap'));
+</script>
+</body>
+</html>

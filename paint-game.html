@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🎨 Magic Paint Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:"Nunito",sans-serif;background:#0f0520;}
+.app{width:100%;height:100%;display:flex;flex-direction:column;}
+
+header{flex-shrink:0;background:linear-gradient(90deg,#ec4899,#a855f7);padding:clamp(5px,1vw,9px) clamp(8px,1.5vw,14px);display:flex;align-items:center;gap:6px;box-shadow:0 3px 14px rgba(236,72,153,.5);}
+.home-btn{background:rgba(255,255,255,.2);color:white;border:2px solid rgba(255,255,255,.45);border-radius:50px;padding:5px 11px;font-weight:900;font-size:.78rem;text-decoration:none;flex-shrink:0;}
+.app-title{font-family:"Baloo 2",cursive;font-size:clamp(.9rem,3vw,1.45rem);color:white;flex:1;text-align:center;text-shadow:2px 2px 0 rgba(0,0,0,.2);}
+.hdr-acts{display:flex;gap:5px;flex-shrink:0;}
+.act-btn{background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.38);border-radius:50px;padding:5px 10px;color:white;font-size:clamp(.6rem,1.6vw,.76rem);font-weight:900;cursor:pointer;white-space:nowrap;}
+.act-btn:active{background:rgba(255,255,255,.35);}
+
+/* Canvas stack */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:#fff;}
+canvas{position:absolute;top:0;left:0;}
+#bgCanvas{z-index:1;pointer-events:none;}
+#paintCanvas{z-index:2;}
+.sticker-layer{position:absolute;inset:0;z-index:3;pointer-events:none;}
+.sticker-el{position:absolute;pointer-events:all;cursor:pointer;line-height:1;-webkit-tap-highlight-color:transparent;animation:sDrop .3s ease;}
+@keyframes sDrop{from{transform:scale(0)rotate(-20deg);opacity:0}to{transform:scale(1)rotate(0deg);opacity:1}}
+
+/* Clip-mode badge */
+.clip-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,.6);color:white;border-radius:50px;padding:4px 16px;font-size:.72rem;font-weight:900;pointer-events:none;opacity:0;transition:opacity .4s;backdrop-filter:blur(4px);white-space:nowrap;}
+.clip-badge.show{opacity:1;}
+
+/* Toolbar */
+.toolbar{flex-shrink:0;background:linear-gradient(180deg,#1e1b4b,#0f0520);padding:clamp(5px,1vw,8px) clamp(7px,1.2vw,11px);display:flex;flex-direction:column;gap:clamp(4px,.8vw,7px);}
+
+.t-tabs{display:flex;gap:4px;justify-content:center;}
+.t-tab{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:50px;padding:clamp(3px,.6vw,6px) clamp(8px,1.5vw,13px);color:rgba(255,255,255,.6);font-size:clamp(.58rem,1.55vw,.75rem);font-weight:900;cursor:pointer;transition:all .18s;user-select:none;}
+.t-tab.active{background:linear-gradient(135deg,#ec4899,#a855f7);color:white;border-color:transparent;box-shadow:0 3px 10px rgba(236,72,153,.5);}
+
+.panel{display:none;flex-direction:column;gap:4px;}
+.panel.show{display:flex;}
+.row-lbl{color:rgba(255,255,255,.4);font-size:clamp(.54rem,1.3vw,.65rem);font-weight:900;text-align:center;letter-spacing:1.5px;text-transform:uppercase;}
+
+/* Colour palette */
+.palette{display:flex;gap:clamp(4px,.9vw,7px);flex-wrap:wrap;justify-content:center;align-items:center;}
+.c-dot{width:clamp(22px,4.5vw,32px);height:clamp(22px,4.5vw,32px);border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.25);transition:transform .15s,border-color .15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2vw,15px);}
+.c-dot.active,.c-dot:active{transform:scale(1.38);border-color:white;box-shadow:0 0 0 3px rgba(255,255,255,.4);}
+
+/* Brush panel */
+.brush-sizes{display:flex;gap:7px;align-items:center;justify-content:center;}
+.sz-btn{border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.sz-btn.active{border-color:white;background:rgba(255,255,255,.3);}
+.brush-types{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
+.bt-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:50px;padding:4px 11px;color:rgba(255,255,255,.7);font-size:clamp(.58rem,1.55vw,.74rem);font-weight:900;cursor:pointer;transition:all .18s;user-select:none;}
+.bt-btn.active{background:linear-gradient(135deg,#ec4899,#a855f7);color:white;border-color:transparent;}
+
+/* Stickers */
+.sticker-grid{display:flex;gap:clamp(4px,.9vw,7px);flex-wrap:wrap;justify-content:center;max-height:clamp(48px,7vw,68px);overflow-y:auto;}
+.s-pick{font-size:clamp(1.15rem,3.6vw,1.75rem);cursor:pointer;padding:2px 3px;border-radius:8px;background:rgba(255,255,255,.07);border:2px solid transparent;transition:all .15s;user-select:none;}
+.s-pick.active{transform:scale(1.4);background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);}
+
+/* Magic */
+.magic-row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
+.m-btn{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:50px;padding:4px 11px;color:rgba(255,255,255,.7);font-size:clamp(.58rem,1.55vw,.74rem);font-weight:900;cursor:pointer;transition:all .18s;user-select:none;}
+.m-btn.active{background:linear-gradient(135deg,#eab308,#f97316);color:white;border-color:transparent;}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:14px;}
+.modal.open{display:flex;}
+.modal-card{background:white;border-radius:22px;padding:20px 16px;max-width:360px;width:100%;text-align:center;animation:mIn .3s ease;max-height:90vh;overflow-y:auto;}
+@keyframes mIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-card h3{font-family:"Baloo 2",cursive;font-size:1.2rem;color:#7c3aed;margin-bottom:6px;}
+.modal-card p{font-size:.8rem;font-weight:700;color:#6b7280;line-height:1.5;margin-bottom:10px;}
+.pages-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.page-btn{background:#f3e8ff;border:3px solid #c084fc;border-radius:12px;padding:7px 5px;cursor:pointer;font-size:.72rem;font-weight:900;color:#7c3aed;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .18s;}
+.page-btn:active{transform:scale(.93);background:#e9d5ff;}
+.page-btn .pi{font-size:1.4rem;}
+.modal-up{background:linear-gradient(135deg,#a855f7,#ec4899);color:white;border:none;border-radius:50px;padding:10px 20px;font-family:"Baloo 2",cursive;font-size:.92rem;cursor:pointer;display:block;width:100%;margin-bottom:8px;}
+.modal-skip{background:none;border:2px solid #e5e7eb;border-radius:50px;padding:7px 16px;color:#6b7280;font-weight:700;cursor:pointer;font-size:.8rem;width:100%;}
+</style>
+</head>
+<body>
+<script>(function(){try{var e=document.documentElement;(e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e);}catch(e){}})();</script>
+
+<!-- PAGE PICKER MODAL -->
+<div class="modal" id="bgModal">
+  <div class="modal-card">
+    <h3>🎨 Pick a Colouring Page!</h3>
+    <p>Choose a picture to colour — or upload your own drawing from Papa!</p>
+    <div class="pages-grid">
+      <div class="page-btn" onclick="loadBuiltIn('sun')"><span class="pi">☀️</span>Sun</div>
+      <div class="page-btn" onclick="loadBuiltIn('house')"><span class="pi">🏠</span>House</div>
+      <div class="page-btn" onclick="loadBuiltIn('flower')"><span class="pi">🌸</span>Flower</div>
+      <div class="page-btn" onclick="loadBuiltIn('butterfly')"><span class="pi">🦋</span>Butterfly</div>
+      <div class="page-btn" onclick="loadBuiltIn('star')"><span class="pi">⭐</span>Star</div>
+      <div class="page-btn" onclick="loadBuiltIn('heart')"><span class="pi">❤️</span>Heart</div>
+      <div class="page-btn" onclick="loadBuiltIn('rainbow')"><span class="pi">🌈</span>Rainbow</div>
+      <div class="page-btn" onclick="loadBuiltIn('fish')"><span class="pi">🐠</span>Fish</div>
+      <div class="page-btn" onclick="loadBuiltIn('cat')"><span class="pi">🐱</span>Cat</div>
+      <div class="page-btn" onclick="loadBuiltIn('elephant')"><span class="pi">🐘</span>Elephant</div>
+      <div class="page-btn" onclick="loadBuiltIn('cake')"><span class="pi">🎂</span>Birthday</div>
+      <div class="page-btn" onclick="loadBuiltIn('tree')"><span class="pi">🌳</span>Tree</div>
+    </div>
+    <button class="modal-up" onclick="document.getElementById('bgUpload').click()">📁 Upload My Own Drawing</button>
+    <input type="file" id="bgUpload" accept="image/*" style="display:none">
+    <button class="modal-skip" onclick="closeModal();useBlank();">✏️ Blank Canvas</button>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <a href="index.html?hub=1" class="home-btn">🏠 Games</a>
+    <div class="app-title">🎨 Magic Paint Studio</div>
+    <div class="hdr-acts">
+      <div class="act-btn" onclick="openModal()">🖼️ Page</div>
+      <div class="act-btn" onclick="undoLast()">↩️ Undo</div>
+      <div class="act-btn" onclick="clearPaint()">🗑️ Clear</div>
+      <div class="act-btn" onclick="saveImg()">💾 Save</div>
+    </div>
+  </header>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="paintCanvas"></canvas>
+    <div class="sticker-layer" id="stickerLayer"></div>
+    <div class="clip-badge" id="clipBadge">✏️ Colouring inside the lines!</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="t-tabs">
+      <div class="t-tab active" id="tabC" onclick="switchTab('C')">🎨 Colours</div>
+      <div class="t-tab"        id="tabB" onclick="switchTab('B')">🖌️ Brush</div>
+      <div class="t-tab"        id="tabS" onclick="switchTab('S')">⭐ Stickers</div>
+      <div class="t-tab"        id="tabM" onclick="switchTab('M')">✨ Magic</div>
+    </div>
+
+    <!-- COLOURS panel -->
+    <div class="panel show" id="panelC">
+      <div class="palette" id="palette"></div>
+    </div>
+
+    <!-- BRUSH panel -->
+    <div class="panel" id="panelB">
+      <div class="row-lbl">Brush Size</div>
+      <div class="brush-sizes" id="sizesRow"></div>
+      <div class="row-lbl" style="margin-top:3px">Brush Type</div>
+      <div class="brush-types" id="typesRow"></div>
+    </div>
+
+    <!-- STICKERS panel -->
+    <div class="panel" id="panelS">
+      <div class="sticker-grid" id="stickerGrid"></div>
+    </div>
+
+    <!-- MAGIC panel -->
+    <div class="panel" id="panelM">
+      <div class="magic-row" id="magicRow"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  CANVAS SETUP
+// ═══════════════════════════════════════
+const wrap        = document.getElementById('canvasWrap');
+const bgCanvas    = document.getElementById('bgCanvas');
+const paintCanvas = document.getElementById('paintCanvas');
+const bgCtx       = bgCanvas.getContext('2d');
+const ctx         = paintCanvas.getContext('2d');
+
+let W = 0, H = 0;
+let bgImage  = null;   // loaded colouring page image
+let maskData = null;   // Uint8Array: 1=colorable interior, 0=border/outside
+let clipMode = false;  // when true, brush is clipped to interior of shapes
+
+function resize() {
+  W = wrap.clientWidth;
+  H = wrap.clientHeight;
+  // Preserve existing paint
+  const tmp = document.createElement('canvas');
+  tmp.width  = paintCanvas.width;
+  tmp.height = paintCanvas.height;
+  tmp.getContext('2d').drawImage(paintCanvas, 0, 0);
+  bgCanvas.width = paintCanvas.width  = W;
+  bgCanvas.height= paintCanvas.height = H;
+  ctx.drawImage(tmp, 0, 0);
+  redrawBg();
+}
+
+// ═══════════════════════════════════════
+//  BG DRAWING & MASK
+// ═══════════════════════════════════════
+function redrawBg() {
+  bgCtx.fillStyle = 'white';
+  bgCtx.fillRect(0, 0, W, H);
+  if (!bgImage) return;
+
+  const sc = Math.min(W / bgImage.width, H / bgImage.height) * 0.95;
+  const bw = bgImage.width  * sc;
+  const bh = bgImage.height * sc;
+  const dx = (W - bw) / 2;
+  const dy = (H - bh) / 2;
+
+  bgCtx.drawImage(bgImage, dx, dy, bw, bh);
+  buildMask(dx, dy, bw, bh);
+}
+
+// Build pixel mask: read bgCanvas, mark interior (light) vs border/outside (dark)
+function buildMask(dx, dy, bw, bh) {
+  const raw  = bgCtx.getImageData(0, 0, W, H);
+  const data = raw.data;
+  maskData   = new Uint8Array(W * H);
+
+  for (let i = 0; i < W * H; i++) {
+    const x = i % W, y = Math.floor(i / W);
+    // Only pixels inside the image bounding box can be coloured
+    if (x < dx || x > dx + bw || y < dy || y > dy + bh) { maskData[i] = 0; continue; }
+    const b = data[i*4];   // R channel (grayscale for SVG)
+    const g = data[i*4+1];
+    const r2= data[i*4+2];
+    const brightness = (b + g + r2) / 3;
+    // Dark pixels = outline/border = not colorable; light pixels = interior
+    maskData[i] = brightness > 128 ? 1 : 0;
+  }
+
+  clipMode = true;
+  document.getElementById('clipBadge').classList.add('show');
+}
+
+// ═══════════════════════════════════════
+//  UNDO
+// ═══════════════════════════════════════
+let snapshots = [];
+function saveSnap() {
+  snapshots.push(ctx.getImageData(0, 0, W, H));
+  if (snapshots.length > 20) snapshots.shift();
+}
+function undoLast() {
+  if (snapshots.length) ctx.putImageData(snapshots.pop(), 0, 0);
+}
+
+// ═══════════════════════════════════════
+//  FLOOD FILL (Bucket)
+//  BFS on paint canvas, respects mask
+// ═══════════════════════════════════════
+function floodFill(sx, sy) {
+  sx = Math.round(sx); sy = Math.round(sy);
+  if (sx < 0 || sy < 0 || sx >= W || sy >= H) return;
+  // Don't fill on border lines
+  if (clipMode && maskData && maskData[sy * W + sx] === 0) return;
+
+  saveSnap();
+
+  const imgData = ctx.getImageData(0, 0, W, H);
+  const data    = imgData.data;
+
+  // Target colour at seed point
+  const base = (sy * W + sx) * 4;
+  const tr = data[base], tg = data[base+1], tb = data[base+2], ta = data[base+3];
+
+  // Fill colour
+  const fc = colorToRGBA(getCurrentColor());
+  // If already that colour, nothing to do
+  if (tr === fc.r && tg === fc.g && tb === fc.b && ta === 255) return;
+
+  const TOLERANCE = 40;
+  function matches(idx) {
+    return (
+      Math.abs(data[idx]   - tr) +
+      Math.abs(data[idx+1] - tg) +
+      Math.abs(data[idx+2] - tb) +
+      Math.abs(data[idx+3] - ta) < TOLERANCE
+    );
+  }
+
+  const stack   = [sy * W + sx];
+  const visited = new Uint8Array(W * H);
+  visited[sy * W + sx] = 1;
+
+  while (stack.length) {
+    const pos = stack.pop();
+    const idx = pos * 4;
+
+    if (!matches(idx)) continue;
+    if (clipMode && maskData && maskData[pos] === 0) continue;
+
+    data[idx]   = fc.r;
+    data[idx+1] = fc.g;
+    data[idx+2] = fc.b;
+    data[idx+3] = 255;
+
+    const x = pos % W, y = Math.floor(pos / W);
+    if (x > 0     && !visited[pos-1]) { visited[pos-1]=1; stack.push(pos-1); }
+    if (x < W-1   && !visited[pos+1]) { visited[pos+1]=1; stack.push(pos+1); }
+    if (y > 0     && !visited[pos-W]) { visited[pos-W]=1; stack.push(pos-W); }
+    if (y < H-1   && !visited[pos+W]) { visited[pos+W]=1; stack.push(pos+W); }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// Helper: parse any CSS colour → {r,g,b,a}
+function colorToRGBA(css) {
+  const tmp = document.createElement('canvas');
+  tmp.width = tmp.height = 1;
+  const c = tmp.getContext('2d');
+  c.fillStyle = css;
+  c.fillRect(0, 0, 1, 1);
+  const d = c.getImageData(0,0,1,1).data;
+  return { r: d[0], g: d[1], b: d[2], a: d[3] };
+}
+
+// ═══════════════════════════════════════
+//  DRAWING STATE
+// ═══════════════════════════════════════
+let drawing    = false;
+let lx = 0, ly = 0;
+let color      = '#ec4899';
+let brushSize  = 20;
+let brushType  = 'round';   // round | spray | chalk | eraser | bucket
+let magic      = 'none';    // none | rainbow | glow | stars | sparkle | bubble
+let stickerMode= null;
+let rainbowHue = 0;
+
+function getCurrentColor() {
+  if (magic === 'rainbow') {
+    rainbowHue = (rainbowHue + 4) % 360;
+    return `hsl(${rainbowHue},100%,55%)`;
+  }
+  return color;
+}
+
+// ═══════════════════════════════════════
+//  CLIPPED STROKE
+//  Draw dots along path, skipping pixels
+//  that are outside the mask (border/OOB)
+// ═══════════════════════════════════════
+function strokeTo(x, y) {
+  if (!drawing) return;
+  const dist  = Math.hypot(x - lx, y - ly);
+  const steps = Math.max(1, Math.ceil(dist / 2));
+
+  for (let i = 0; i <= steps; i++) {
+    const t  = i / steps;
+    const px = Math.round(lx + (x - lx) * t);
+    const py = Math.round(ly + (y - ly) * t);
+
+    // Clipping: if clipMode on, skip pixels outside colorable region
+    if (clipMode && maskData) {
+      if (px < 0 || py < 0 || px >= W || py >= H) continue;
+      if (maskData[py * W + px] === 0) continue;
+    }
+
+    drawDot(px, py);
+  }
+
+  lx = x; ly = y;
+}
+
+function drawDot(px, py) {
+  const c = getCurrentColor();
+
+  if (brushType === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(px, py, brushSize, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    return;
+  }
+
+  if (brushType === 'spray') {
+    const count = Math.round(brushSize * 3);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const rad   = Math.random() * brushSize;
+      const nx = Math.round(px + Math.cos(angle) * rad);
+      const ny = Math.round(py + Math.sin(angle) * rad);
+      if (clipMode && maskData) {
+        if (nx < 0||ny < 0||nx >= W||ny >= H) continue;
+        if (maskData[ny*W+nx] === 0) continue;
+      }
+      ctx.globalAlpha = Math.random() * 0.5 + 0.1;
+      ctx.fillStyle = c;
+      ctx.fillRect(nx, ny, 1.5, 1.5);
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+
+  if (brushType === 'chalk') {
+    ctx.globalAlpha = 0.28;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(px + Math.random()*4-2, py + Math.random()*4-2, brushSize/2, 0, Math.PI*2);
+      ctx.fillStyle = c;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+
+  // Default round pen
+  if (magic === 'glow') { ctx.shadowBlur = 22; ctx.shadowColor = c; }
+  ctx.beginPath();
+  ctx.arc(px, py, brushSize / 2, 0, Math.PI*2);
+  ctx.fillStyle = c;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Magic particles
+  if (magic === 'stars' && Math.random() < 0.28) {
+    ctx.font = (6 + Math.random()*9)+'px serif';
+    ctx.globalAlpha = 0.75;
+    ctx.fillText('⭐', px + Math.random()*22-11, py + Math.random()*22-11);
+    ctx.globalAlpha = 1;
+  }
+  if (magic === 'sparkle' && Math.random() < 0.22) {
+    ctx.font = (5 + Math.random()*7)+'px serif';
+    ctx.globalAlpha = 0.7;
+    ctx.fillText(['✦','✧','✶'][Math.floor(Math.random()*3)], px + Math.random()*18-9, py + Math.random()*18-9);
+    ctx.globalAlpha = 1;
+  }
+  if (magic === 'bubble' && Math.random() < 0.18) {
+    ctx.beginPath();
+    ctx.arc(px + Math.random()*18-9, py + Math.random()*18-9, brushSize*0.4 + Math.random()*5, 0, Math.PI*2);
+    ctx.strokeStyle = c;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.45;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ═══════════════════════════════════════
+//  POINTER HANDLING
+// ═══════════════════════════════════════
+function getXY(e) {
+  const rect = paintCanvas.getBoundingClientRect();
+  const sx = W / rect.width, sy = H / rect.height;
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - rect.left)*sx, y: (src.clientY - rect.top)*sy };
+}
+
+function onStart(e) {
+  e.preventDefault();
+  const p = getXY(e);
+
+  if (stickerMode) { placeSticker(p.x, p.y); return; }
+
+  if (brushType === 'bucket') {
+    floodFill(p.x, p.y);
+    return;
+  }
+
+  saveSnap();
+  drawing = true;
+  lx = p.x; ly = p.y;
+  drawDot(Math.round(p.x), Math.round(p.y)); // dot on tap
+}
+
+function onMove(e) {
+  e.preventDefault();
+  if (!drawing) return;
+  const p = getXY(e);
+  strokeTo(p.x, p.y);
+}
+
+function onEnd(e) {
+  e.preventDefault();
+  drawing = false;
+}
+
+paintCanvas.addEventListener('mousedown',  onStart);
+paintCanvas.addEventListener('mousemove',  onMove);
+paintCanvas.addEventListener('mouseup',    onEnd);
+paintCanvas.addEventListener('mouseleave', onEnd);
+paintCanvas.addEventListener('touchstart', onStart, { passive: false });
+paintCanvas.addEventListener('touchmove',  onMove,  { passive: false });
+paintCanvas.addEventListener('touchend',   onEnd,   { passive: false });
+
+// ═══════════════════════════════════════
+//  STICKER PLACEMENT
+// ═══════════════════════════════════════
+function placeSticker(cx, cy) {
+  const el = document.createElement('div');
+  el.className = 'sticker-el';
+  el.textContent = stickerMode;
+  const sz = Math.max(24, Math.min(brushSize * 1.8, 64));
+  el.style.cssText = `left:${cx - sz/2}px;top:${cy - sz/2}px;font-size:${sz}px;`;
+  el.addEventListener('click',     () => el.remove());
+  el.addEventListener('touchstart',() => el.remove(), { passive: true });
+  document.getElementById('stickerLayer').style.pointerEvents = 'all';
+  document.getElementById('stickerLayer').appendChild(el);
+}
+
+// ═══════════════════════════════════════
+//  COLOUR PALETTE
+// ═══════════════════════════════════════
+const COLORS = [
+  '#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6',
+  '#8b5cf6','#ec4899','#ffffff','#000000','#fbbf24','#34d399',
+  '#60a5fa','#c084fc','#f472b6','#a3e635','#fca5a5','#fdba74',
+  '#7c3aed','#374151'
+];
+const pal = document.getElementById('palette');
+
+COLORS.forEach(c => {
+  const d = document.createElement('div');
+  d.className = 'c-dot' + (c === color ? ' active' : '');
+  d.style.background = c;
+  d.onclick = () => {
+    color = c;
+    stickerMode = null;
+    if (brushType === 'bucket' || brushType === 'eraser') {} // keep tool
+    document.querySelectorAll('.c-dot').forEach(x => x.classList.remove('active'));
+    d.classList.add('active');
+  };
+  pal.appendChild(d);
+});
+
+// Custom colour picker
+const cp = document.createElement('div');
+cp.className = 'c-dot'; cp.title = 'Custom colour';
+cp.style.background = 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)';
+cp.onclick = () => {
+  const inp = document.createElement('input'); inp.type = 'color'; inp.value = color;
+  inp.oninput = e => { color = e.target.value; };
+  inp.click();
+};
+pal.appendChild(cp);
+
+// Bucket button inside colours panel (easy access)
+const bucketDot = document.createElement('div');
+bucketDot.className = 'c-dot'; bucketDot.title = '🪣 Bucket Fill';
+bucketDot.textContent = '🪣';
+bucketDot.onclick = () => {
+  setTool('bucket');
+  document.querySelectorAll('.bt-btn').forEach(b => b.classList.toggle('active', b.dataset.id === 'bucket'));
+};
+pal.appendChild(bucketDot);
+
+// ═══════════════════════════════════════
+//  BRUSH SIZES
+// ═══════════════════════════════════════
+const SIZES = [4, 10, 20, 34, 56];
+const szRow = document.getElementById('sizesRow');
+SIZES.forEach(s => {
+  const btn = document.createElement('div');
+  btn.className = 'sz-btn' + (s === brushSize ? ' active' : '');
+  const vis = Math.max(12, Math.min(s * 0.7, 26));
+  btn.style.width  = (vis + 12) + 'px';
+  btn.style.height = (vis + 12) + 'px';
+  btn.innerHTML = `<div style="width:${vis}px;height:${vis}px;border-radius:50%;background:white;opacity:.8"></div>`;
+  btn.onclick = () => {
+    brushSize = s;
+    document.querySelectorAll('.sz-btn').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+  };
+  szRow.appendChild(btn);
+});
+
+// ═══════════════════════════════════════
+//  BRUSH TYPES
+// ═══════════════════════════════════════
+const BRUSH_TYPES = [
+  { id:'round',  lbl:'✏️ Pen'    },
+  { id:'spray',  lbl:'💦 Spray'  },
+  { id:'chalk',  lbl:'🖍️ Chalk'  },
+  { id:'eraser', lbl:'🧹 Erase'  },
+  { id:'bucket', lbl:'🪣 Fill'   },
+];
+
+function setTool(id) {
+  brushType = id;
+  stickerMode = null;
+  document.querySelectorAll('.bt-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+}
+
+const typeRow = document.getElementById('typesRow');
+BRUSH_TYPES.forEach(bt => {
+  const btn = document.createElement('div');
+  btn.className = 'bt-btn' + (bt.id === brushType ? ' active' : '');
+  btn.dataset.id = bt.id;
+  btn.textContent = bt.lbl;
+  btn.onclick = () => setTool(bt.id);
+  typeRow.appendChild(btn);
+});
+
+// ═══════════════════════════════════════
+//  STICKER PICKER
+// ═══════════════════════════════════════
+const STICKERS = ['⭐','🌟','✨','💫','🌸','🌺','🌈','🦋','❤️','💖','💕','🎀','🎉','🎊','🥳','🎈','🦄','🐱','🐶','🐸','🦊','🐼','🐰','🐥','🍭','🍬','🍦','🧁','🍩','🌙','☀️','🌻','🍀','🌴','🎵','🌠','🏅','🦁','🐘','🌊','🌷','🎠'];
+const sg = document.getElementById('stickerGrid');
+STICKERS.forEach(s => {
+  const sp = document.createElement('div');
+  sp.className = 's-pick';
+  sp.textContent = s;
+  sp.onclick = () => {
+    document.querySelectorAll('.s-pick').forEach(x => x.classList.remove('active'));
+    sp.classList.add('active');
+    stickerMode = s;
+    brushType = 'sticker'; // pseudo-tool so bucket/eraser deactivates
+  };
+  sg.appendChild(sp);
+});
+
+// ═══════════════════════════════════════
+//  MAGIC EFFECTS
+// ═══════════════════════════════════════
+const MAGIC_OPTS = [
+  { id:'none',    lbl:'✏️ Normal'  },
+  { id:'rainbow', lbl:'🌈 Rainbow' },
+  { id:'glow',    lbl:'✨ Glow'    },
+  { id:'stars',   lbl:'⭐ Stars'   },
+  { id:'sparkle', lbl:'💎 Sparkle' },
+  { id:'bubble',  lbl:'🫧 Bubbles' },
+];
+const mr = document.getElementById('magicRow');
+MAGIC_OPTS.forEach(m => {
+  const btn = document.createElement('div');
+  btn.className = 'm-btn' + (m.id === magic ? ' active' : '');
+  btn.textContent = m.lbl;
+  btn.onclick = () => {
+    magic = m.id;
+    stickerMode = null;
+    document.querySelectorAll('.m-btn').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+  };
+  mr.appendChild(btn);
+});
+
+// ═══════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════
+function switchTab(t) {
+  ['C','B','S','M'].forEach(id => {
+    document.getElementById('panel' + id).classList.toggle('show', id === t);
+    document.getElementById('tab'   + id).classList.toggle('active', id === t);
+  });
+  if (t !== 'S') { stickerMode = null; document.querySelectorAll('.s-pick').forEach(x=>x.classList.remove('active')); }
+}
+
+// ═══════════════════════════════════════
+//  BUILT-IN SVG COLOURING PAGES
+// ═══════════════════════════════════════
+const SVG_PAGES = {
+
+sun:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<circle cx="200" cy="200" r="72" fill="none" stroke="#111" stroke-width="7"/>
+<line x1="200" y1="48" x2="200" y2="108" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="200" y1="292" x2="200" y2="352" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="48" y1="200" x2="108" y2="200" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="292" y1="200" x2="352" y2="200" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="98" y1="98" x2="141" y2="141" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="259" y1="259" x2="302" y2="302" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="302" y1="98" x2="259" y2="141" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<line x1="141" y1="259" x2="98" y2="302" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<circle cx="178" cy="188" r="9" fill="#111"/><circle cx="222" cy="188" r="9" fill="#111"/>
+<path d="M175 220 Q200 244 225 220" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+</svg>`,
+
+house:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<rect x="78" y="208" width="244" height="164" fill="none" stroke="#111" stroke-width="7"/>
+<polygon points="58,214 200,76 342,214" fill="none" stroke="#111" stroke-width="7" stroke-linejoin="round"/>
+<rect x="163" y="298" width="74" height="74" rx="37" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="222" cy="335" r="5" fill="#111"/>
+<rect x="93" y="242" width="72" height="56" rx="6" fill="none" stroke="#111" stroke-width="6"/>
+<line x1="129" y1="242" x2="129" y2="298" stroke="#111" stroke-width="4"/>
+<line x1="93" y1="270" x2="165" y2="270" stroke="#111" stroke-width="4"/>
+<rect x="235" y="242" width="72" height="56" rx="6" fill="none" stroke="#111" stroke-width="6"/>
+<line x1="271" y1="242" x2="271" y2="298" stroke="#111" stroke-width="4"/>
+<line x1="235" y1="270" x2="307" y2="270" stroke="#111" stroke-width="4"/>
+<rect x="272" y="108" width="36" height="62" fill="none" stroke="#111" stroke-width="6"/>
+</svg>`,
+
+flower:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<line x1="200" y1="362" x2="200" y2="238" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="162" cy="312" rx="42" ry="18" fill="none" stroke="#111" stroke-width="6" transform="rotate(-30 162 312)"/>
+<ellipse cx="238" cy="286" rx="42" ry="18" fill="none" stroke="#111" stroke-width="6" transform="rotate(30 238 286)"/>
+<ellipse cx="200" cy="152" rx="30" ry="52" fill="none" stroke="#111" stroke-width="6"/>
+<ellipse cx="200" cy="152" rx="30" ry="52" fill="none" stroke="#111" stroke-width="6" transform="rotate(60 200 200)"/>
+<ellipse cx="200" cy="152" rx="30" ry="52" fill="none" stroke="#111" stroke-width="6" transform="rotate(120 200 200)"/>
+<ellipse cx="200" cy="152" rx="30" ry="52" fill="none" stroke="#111" stroke-width="6" transform="rotate(180 200 200)"/>
+<ellipse cx="200" cy="152" rx="30" ry="52" fill="none" stroke="#111" stroke-width="6" transform="rotate(240 200 200)"/>
+<ellipse cx="200" cy="152" rx="30" ry="52" fill="none" stroke="#111" stroke-width="6" transform="rotate(300 200 200)"/>
+<circle cx="200" cy="200" r="36" fill="none" stroke="#111" stroke-width="7"/>
+</svg>`,
+
+butterfly:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<ellipse cx="200" cy="205" rx="10" ry="72" fill="none" stroke="#111" stroke-width="7"/>
+<line x1="200" y1="135" x2="163" y2="100" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+<circle cx="160" cy="97" r="7" fill="none" stroke="#111" stroke-width="5"/>
+<line x1="200" y1="135" x2="237" y2="100" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+<circle cx="240" cy="97" r="7" fill="none" stroke="#111" stroke-width="5"/>
+<path d="M200 168 Q118 76 72 152 Q56 222 200 218" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M200 168 Q282 76 328 152 Q344 222 200 218" fill="none" stroke="#111" stroke-width="7"/>
+<circle cx="133" cy="165" r="24" fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="267" cy="165" r="24" fill="none" stroke="#111" stroke-width="5"/>
+<path d="M200 218 Q112 232 98 294 Q128 344 200 268" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M200 218 Q288 232 302 294 Q272 344 200 268" fill="none" stroke="#111" stroke-width="7"/>
+<ellipse cx="152" cy="268" rx="16" ry="10" fill="none" stroke="#111" stroke-width="4" transform="rotate(30 152 268)"/>
+<ellipse cx="248" cy="268" rx="16" ry="10" fill="none" stroke="#111" stroke-width="4" transform="rotate(-30 248 268)"/>
+</svg>`,
+
+star:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<polygon points="200,48 232,152 342,152 256,216 288,322 200,260 112,322 144,216 58,152 168,152" fill="none" stroke="#111" stroke-width="8" stroke-linejoin="round"/>
+<circle cx="178" cy="196" r="10" fill="#111"/><circle cx="222" cy="196" r="10" fill="#111"/>
+<path d="M175 228 Q200 252 225 228" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+</svg>`,
+
+heart:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<path d="M200 332 Q78 256 58 158 Q46 86 118 72 Q164 62 200 108 Q236 62 282 72 Q354 86 342 158 Q322 256 200 332Z" fill="none" stroke="#111" stroke-width="9" stroke-linejoin="round"/>
+<path d="M200 264 Q152 232 142 194 Q136 168 162 160 Q186 154 200 182 Q214 154 238 160 Q264 168 258 194 Q248 232 200 264Z" fill="none" stroke="#111" stroke-width="5"/>
+</svg>`,
+
+rainbow:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<path d="M28 312 Q200 18 372 312" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M56 312 Q200 62 344 312" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M84 312 Q200 104 316 312" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M112 312 Q200 148 288 312" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M140 312 Q200 190 260 312" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M168 312 Q200 232 232 312" fill="none" stroke="#111" stroke-width="7"/>
+<ellipse cx="62" cy="298" rx="46" ry="30" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="40" cy="284" r="22" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="72" cy="278" r="27" fill="none" stroke="#111" stroke-width="6"/>
+<ellipse cx="338" cy="298" rx="46" ry="30" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="360" cy="284" r="22" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="328" cy="278" r="27" fill="none" stroke="#111" stroke-width="6"/>
+</svg>`,
+
+fish:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<path d="M108 200 Q52 148 38 98 Q90 128 108 200Z" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M108 200 Q52 252 38 302 Q90 272 108 200Z" fill="none" stroke="#111" stroke-width="7"/>
+<ellipse cx="228" cy="200" rx="124" ry="78" fill="none" stroke="#111" stroke-width="8"/>
+<path d="M168 163 Q186 143 204 163" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M208 163 Q226 143 244 163" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M248 163 Q266 143 284 163" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M182 193 Q200 173 218 193" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M224 193 Q242 173 260 193" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M168 225 Q186 205 204 225" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M208 225 Q226 205 244 225" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M248 225 Q266 205 284 225" fill="none" stroke="#111" stroke-width="4"/>
+<circle cx="308" cy="184" r="19" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="308" cy="184" r="7" fill="#111"/>
+<path d="M338 200 Q354 216 338 230" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+<path d="M218 126 Q238 78 262 126" fill="none" stroke="#111" stroke-width="6"/>
+<circle cx="362" cy="152" r="11" fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="380" cy="128" r="8"  fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="365" cy="108" r="5"  fill="none" stroke="#111" stroke-width="4"/>
+</svg>`,
+
+cat:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<ellipse cx="200" cy="230" rx="110" ry="100" fill="none" stroke="#111" stroke-width="7"/>
+<circle cx="200" cy="158" r="72" fill="none" stroke="#111" stroke-width="7"/>
+<polygon points="138,100 118,50 158,90" fill="none" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="262,100 282,50 242,90" fill="none" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="178" cy="150" r="10" fill="#111"/><circle cx="222" cy="150" r="10" fill="#111"/>
+<circle cx="178" cy="148" r="4" fill="white"/><circle cx="222" cy="148" r="4" fill="white"/>
+<ellipse cx="200" cy="170" rx="10" ry="7" fill="none" stroke="#111" stroke-width="4"/>
+<path d="M190 176 Q200 186 210 176" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+<line x1="148" y1="165" x2="100" y2="158" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+<line x1="148" y1="170" x2="100" y2="170" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+<line x1="148" y1="175" x2="100" y2="182" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+<line x1="252" y1="165" x2="300" y2="158" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+<line x1="252" y1="170" x2="300" y2="170" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+<line x1="252" y1="175" x2="300" y2="182" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+<ellipse cx="140" cy="270" rx="30" ry="14" fill="none" stroke="#111" stroke-width="5" transform="rotate(-15 140 270)"/>
+<ellipse cx="260" cy="270" rx="30" ry="14" fill="none" stroke="#111" stroke-width="5" transform="rotate(15 260 270)"/>
+<path d="M230 310 Q260 360 240 370 Q220 362 200 340" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+</svg>`,
+
+elephant:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<ellipse cx="200" cy="230" rx="130" ry="100" fill="none" stroke="#111" stroke-width="7"/>
+<circle cx="175" cy="148" r="62" fill="none" stroke="#111" stroke-width="7"/>
+<path d="M136 196 Q120 240 128 290 Q132 310 148 308 Q162 306 158 285 Q154 260 162 240" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+<polygon points="128,98 108,52 148,90" fill="none" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="208,92 228,48 194,86" fill="none" stroke="#111" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="158" cy="148" r="10" fill="#111"/>
+<circle cx="157" cy="146" r="4" fill="white"/>
+<ellipse cx="185" cy="166" rx="14" ry="8" fill="none" stroke="#111" stroke-width="4"/>
+<line x1="100" y1="330" x2="100" y2="372" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+<line x1="148" y1="330" x2="148" y2="372" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+<line x1="252" y1="330" x2="252" y2="372" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+<line x1="300" y1="330" x2="300" y2="372" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+<path d="M294 192 Q340 188 344 210 Q346 228 320 226" fill="none" stroke="#111" stroke-width="6"/>
+</svg>`,
+
+cake:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<rect x="60" y="240" width="280" height="110" rx="8" fill="none" stroke="#111" stroke-width="7"/>
+<rect x="90" y="190" width="220" height="60" rx="6" fill="none" stroke="#111" stroke-width="6"/>
+<path d="M60 240 Q100 220 140 240 Q180 260 220 240 Q260 220 300 240 Q320 252 340 240" fill="none" stroke="#111" stroke-width="5"/>
+<path d="M90 190 Q120 174 150 190 Q180 206 210 190 Q240 174 270 190 Q285 198 310 190" fill="none" stroke="#111" stroke-width="4"/>
+<line x1="140" y1="190" x2="140" y2="148" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+<line x1="200" y1="190" x2="200" y2="140" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+<line x1="260" y1="190" x2="260" y2="148" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="140" cy="142" rx="10" ry="16" fill="none" stroke="#111" stroke-width="5"/>
+<ellipse cx="200" cy="134" rx="10" ry="16" fill="none" stroke="#111" stroke-width="5"/>
+<ellipse cx="260" cy="142" rx="10" ry="16" fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="140" cy="130" r="5" fill="#111"/>
+<circle cx="200" cy="122" r="5" fill="#111"/>
+<circle cx="260" cy="130" r="5" fill="#111"/>
+<circle cx="110" cy="275" r="12" fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="200" cy="275" r="12" fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="290" cy="275" r="12" fill="none" stroke="#111" stroke-width="5"/>
+<circle cx="155" cy="305" r="10" fill="none" stroke="#111" stroke-width="4"/>
+<circle cx="245" cy="305" r="10" fill="none" stroke="#111" stroke-width="4"/>
+</svg>`,
+
+tree:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="white"/>
+<rect x="178" y="300" width="44" height="72" fill="none" stroke="#111" stroke-width="7"/>
+<polygon points="200,50 310,200 90,200" fill="none" stroke="#111" stroke-width="7" stroke-linejoin="round"/>
+<polygon points="200,110 295,240 105,240" fill="none" stroke="#111" stroke-width="7" stroke-linejoin="round"/>
+<polygon points="200,170 280,300 120,300" fill="none" stroke="#111" stroke-width="7" stroke-linejoin="round"/>
+<circle cx="200" cy="72" r="12" fill="#111"/>
+<circle cx="152" cy="155" r="8" fill="none" stroke="#111" stroke-width="4"/>
+<circle cx="248" cy="155" r="8" fill="none" stroke="#111" stroke-width="4"/>
+<circle cx="200" cy="140" r="6" fill="none" stroke="#111" stroke-width="3"/>
+<circle cx="136" cy="215" r="9" fill="none" stroke="#111" stroke-width="4"/>
+<circle cx="264" cy="215" r="9" fill="none" stroke="#111" stroke-width="4"/>
+<circle cx="200" cy="200" r="7" fill="none" stroke="#111" stroke-width="3"/>
+</svg>`,
+};
+
+function loadBuiltIn(key) {
+  const svgStr = SVG_PAGES[key];
+  if (!svgStr) return;
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const url  = URL.createObjectURL(blob);
+  const img  = new Image();
+  img.onload = () => {
+    bgImage = img;
+    ctx.clearRect(0, 0, W, H);
+    snapshots = [];
+    document.getElementById('stickerLayer').innerHTML = '';
+    redrawBg();
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+  closeModal();
+}
+
+// Upload handler
+document.getElementById('bgUpload').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      bgImage = img;
+      ctx.clearRect(0, 0, W, H);
+      snapshots = [];
+      document.getElementById('stickerLayer').innerHTML = '';
+      redrawBg();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  closeModal();
+});
+
+function openModal() { document.getElementById('bgModal').classList.add('open'); }
+function closeModal() { document.getElementById('bgModal').classList.remove('open'); }
+
+// ═══════════════════════════════════════
+//  ACTIONS: CLEAR / SAVE / BLANK
+// ═══════════════════════════════════════
+function useBlank() {
+  bgImage = null; clipMode = false; maskData = null;
+  document.getElementById('clipBadge').classList.remove('show');
+  bgCtx.fillStyle = 'white'; bgCtx.fillRect(0, 0, W, H);
+  ctx.clearRect(0, 0, W, H);
+  snapshots = [];
+  document.getElementById('stickerLayer').innerHTML = '';
+}
+
+function clearPaint() {
+  ctx.clearRect(0, 0, W, H);
+  document.getElementById('stickerLayer').innerHTML = '';
+  snapshots = [];
+}
+
+function saveImg() {
+  const sv = document.createElement('canvas');
+  sv.width = W; sv.height = H;
+  const sc = sv.getContext('2d');
+  sc.drawImage(bgCanvas,    0, 0);
+  sc.drawImage(paintCanvas, 0, 0);
+  document.querySelectorAll('.sticker-el').forEach(s => {
+    const x  = parseFloat(s.style.left) + parseFloat(s.style.fontSize) / 2;
+    const y  = parseFloat(s.style.top)  + parseFloat(s.style.fontSize);
+    sc.font = s.style.fontSize + ' serif';
+    sc.fillText(s.textContent, x, y);
+  });
+  const a = document.createElement('a');
+  a.download = 'eshanvi-art-' + Date.now() + '.png';
+  a.href = sv.toDataURL('image/png');
+  a.click();
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+window.addEventListener('resize', resize);
+window.addEventListener('load', () => {
+  resize();
+  openModal();
+});
+</script>
+</body>
+</html>
